@@ -11,22 +11,20 @@
   <div class="max-w-4xl mx-auto">
     <header class="flex justify-between items-center mb-12">
       <h1 class="text-3xl font-bold">Chrono<span class="text-indigo-400">Vault</span></h1>
-      <div id="authHeader"></div>
+      <div id="authHeader" class="text-sm text-slate-400"></div>
     </header>
 
     <main id="mainContent">
-      <!-- Auth Screen -->
       <div id="authView" class="max-w-md mx-auto bg-slate-900 p-8 rounded-2xl border border-slate-800">
-        <h2 id="authTitle" class="text-xl font-bold mb-4">Đăng nhập / Đăng ký</h2>
+        <h2 class="text-xl font-bold mb-4">Đăng nhập / Đăng ký</h2>
         <input type="email" id="email" placeholder="Email" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
         <input type="password" id="password" placeholder="Mật khẩu" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
         <button onclick="handleAuth()" id="authBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold transition">Đăng nhập</button>
       </div>
 
-      <!-- Vault Screen -->
       <div id="vaultView" class="hidden">
         <div class="mb-8 p-4 bg-slate-900 rounded-xl border border-slate-700 flex gap-2">
-          <input type="text" id="recoveryKeyInput" placeholder="Nhập mã dự phòng để khôi phục kén..." class="flex-1 bg-transparent outline-none">
+          <input type="text" id="recoveryKeyInput" placeholder="Nhập mã dự phòng..." class="flex-1 bg-transparent outline-none">
           <button onclick="recoverCapsule()" class="bg-emerald-600 px-4 py-2 rounded-lg text-sm font-medium">Khôi phục</button>
         </div>
         <div id="capsuleList" class="grid md:grid-cols-2 gap-4"></div>
@@ -39,14 +37,14 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
     import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
-    // LƯU Ý: Hãy điền cấu hình chính xác từ dự án Firebase của bạn vào đây
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyDcgynv5TTQZmwYkwUjACrNW19Kl_Mllfo",
+      authDomain: "chronovault-815fc.firebaseapp.com",
+      projectId: "chronovault-815fc",
+      storageBucket: "chronovault-815fc.firebasestorage.app",
+      messagingSenderId: "996476013828",
+      appId: "1:996476013828:web:6cb612b58be545c8fc1451",
+      measurementId: "G-MNNH3DXTF2"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -58,8 +56,12 @@
       const pass = document.getElementById('password').value;
       try {
         await signInWithEmailAndPassword(auth, email, pass);
-      } catch {
-        await createUserWithEmailAndPassword(auth, email, pass);
+      } catch (error) {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            await createUserWithEmailAndPassword(auth, email, pass);
+        } else {
+            alert("Lỗi đăng nhập: " + error.message);
+        }
       }
     };
 
@@ -67,24 +69,19 @@
       if (user) {
         document.getElementById('authView').classList.add('hidden');
         document.getElementById('vaultView').classList.remove('hidden');
+        document.getElementById('authHeader').innerText = "Chào, " + user.email;
       }
     });
 
     window.recoverCapsule = async () => {
       const key = document.getElementById('recoveryKeyInput').value;
       if (!key) return;
-      
       try {
         const q = query(collection(db, "capsules"), where("recoveryKey", "==", key));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          alert("Đã tìm thấy kén!");
-        } else {
-          alert("Không tìm thấy kén với mã này.");
-        }
+        const snapshot = await getDocs(q);
+        alert(snapshot.empty ? "Không tìm thấy kén." : "Đã tìm thấy kén!");
       } catch (err) {
-        console.error(err);
-        alert("Lỗi khi khôi phục.");
+        alert("Lỗi kết nối database.");
       }
     };
   </script>
