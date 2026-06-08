@@ -1,42 +1,469 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChronoVault - Bảo mật kỷ niệm</title>
+  <title>ChronoVault - Nhật ký 10 năm sau</title>
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Playfair Display for classic aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2 family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .serif-font {
+      font-family: 'Playfair Display', serif;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
 
-  <div class="max-w-4xl mx-auto">
-    <header class="flex justify-between items-center mb-12">
-      <h1 class="text-3xl font-bold">Chrono<span class="text-indigo-400">Vault</span></h1>
-      <div id="authHeader" class="text-sm text-slate-400"></div>
-    </header>
+  <!-- Ambient glow decoration background -->
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none z-0"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none z-0"></div>
 
-    <main id="mainContent">
-      <div id="authView" class="max-w-md mx-auto bg-slate-900 p-8 rounded-2xl border border-slate-800">
-        <h2 class="text-xl font-bold mb-4">Đăng nhập / Đăng ký</h2>
-        <input type="email" id="email" placeholder="Email" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
-        <input type="password" id="password" placeholder="Mật khẩu" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
-        <button onclick="handleAuth()" id="authBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold transition">Đăng nhập</button>
-      </div>
+  <!-- Dynamic Toast Alerts System -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
 
-      <div id="vaultView" class="hidden">
-        <div class="mb-8 p-4 bg-slate-900 rounded-xl border border-slate-700 flex gap-2">
-          <input type="text" id="recoveryKeyInput" placeholder="Nhập mã dự phòng..." class="flex-1 bg-transparent outline-none">
-          <button onclick="recoverCapsule()" class="bg-emerald-600 px-4 py-2 rounded-lg text-sm font-medium">Khôi phục</button>
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div id="logo-btn" class="flex items-center space-x-2 cursor-pointer group">
+        <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center group-hover:bg-blue-600/40 transition">
+          <i data-lucide="clock" class="w-5 h-5 text-blue-400"></i>
         </div>
-        <div id="capsuleList" class="grid md:grid-cols-2 gap-4"></div>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          ChronoVault
+        </h1>
       </div>
-    </main>
+
+      <div class="flex items-center space-x-3">
+        <!-- Engine Mode Status Badge -->
+        <div id="engine-badge" class="flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border bg-slate-900 cursor-pointer hover:bg-slate-800 transition" title="Nhấp để xem hướng dẫn cấu hình tên miền">
+          <span class="w-2 h-2 rounded-full bg-slate-500 mr-1.5 animate-pulse"></span>
+          <span id="engine-text">Đang kiểm tra...</span>
+        </div>
+
+        <div id="user-nav" class="flex items-center space-x-4 hidden">
+          <div class="hidden sm:flex items-center text-sm text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+            <i data-lucide="user" class="w-4 h-4 mr-2 text-blue-400"></i>
+            <span id="user-email-display"></span>
+          </div>
+          <button id="logout-btn" class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition" title="Đăng xuất">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-8 relative z-10">
+    
+    <!-- LOADING SPINNER VIEW -->
+    <div id="view-loading" class="min-h-[50vh] flex flex-col items-center justify-center">
+      <i data-lucide="clock" class="animate-spin w-12 h-12 text-blue-400 mb-4"></i>
+      <p class="text-slate-400 text-sm">Đang kết nối cổng thời gian...</p>
+    </div>
+
+    <!-- AUTHENTICATION VIEW -->
+    <div id="view-auth" class="hidden max-w-md mx-auto mt-6">
+      
+      <!-- Domain Unauthorized Notice (Shown dynamically when Firebase blocks origin) -->
+      <div id="unauthorized-domain-banner" class="hidden mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 text-xs leading-relaxed space-y-2">
+        <div class="flex items-center gap-2 font-bold text-sm">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0"></i>
+          <span>Phát hiện lỗi Iframe / Tên miền chưa ủy quyền</span>
+        </div>
+        <p>Ứng dụng đã <strong>tự động chuyển sang Chế độ Lưu trữ Cục bộ (Local Storage)</strong> để bạn có thể trải nghiệm toàn bộ tính năng một cách mượt mà nhất!</p>
+        <button id="open-troubleshoot-btn" class="text-blue-400 hover:text-blue-300 font-semibold underline block mt-1">Cách cấu hình Đám mây (Firebase)</button>
+      </div>
+
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl relative overflow-hidden backdrop-blur-md p-8">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+        
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-white mb-2 serif-font italic">ChronoVault</h2>
+          <p class="text-slate-400 text-sm">Khóa giữ ký ức, mở khóa tương lai</p>
+        </div>
+
+        <form id="auth-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Email</label>
+            <div class="relative">
+              <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+              <input type="email" id="auth-email" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="example@email.com">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Mật khẩu</label>
+            <div class="relative">
+              <i data-lucide="shield" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+              <input type="password" id="auth-password" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="••••••••">
+            </div>
+          </div>
+
+          <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98]">
+            <span>Đăng nhập</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <div class="mt-6 flex items-center justify-between">
+          <hr class="w-full border-slate-800" />
+          <span class="px-3 text-xs text-slate-500 whitespace-nowrap">HOẶC CHỌN</span>
+          <hr class="w-full border-slate-800" />
+        </div>
+
+        <button id="auth-google-btn" class="mt-4 w-full bg-white hover:bg-slate-100 text-slate-900 font-medium py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-[0.98]">
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+          </svg>
+          Tiếp tục bằng Google
+        </button>
+
+        <p class="mt-6 text-center text-sm text-slate-400">
+          <span id="auth-switch-text">Chưa có tài khoản?</span>
+          <button id="auth-switch-btn" class="text-blue-400 hover:text-blue-300 font-medium ml-1">Đăng ký ngay</button>
+        </p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="hidden space-y-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Kho lưu trữ kén thời gian</h2>
+          <p class="text-slate-400 mt-1">Nơi lưu giữ những ký ức an toàn gửi tới tương lai.</p>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button id="open-recover-modal-btn" class="flex-1 sm:flex-none border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 px-4 py-2.5 rounded-full font-medium flex items-center justify-center gap-2 transition">
+            <i data-lucide="key" class="w-4 h-4"></i>
+            Khôi phục kén
+          </button>
+          <button id="go-create-btn" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-full font-medium flex items-center justify-center gap-2 transition shadow-lg shadow-blue-500/20">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            Tạo kén mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid list of capsules -->
+      <div id="capsules-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Will be dynamically generated -->
+      </div>
+
+      <!-- Empty state -->
+      <div id="capsules-empty" class="hidden text-center py-20 bg-slate-900/40 border border-slate-800 border-dashed rounded-2xl">
+        <i data-lucide="clock" class="w-16 h-16 text-slate-700 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-slate-300">Chưa có chiếc kén thời gian nào</h3>
+        <p class="text-slate-500 mt-2 max-w-md mx-auto px-4">
+          Hãy để lại một thông điệp bí mật đến bản thân sau vài năm, hoặc lời nhắn hẹn giờ đầy trân trọng tới những người thân yêu.
+        </p>
+        <button id="empty-create-btn" class="mt-6 text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1">
+          Bắt đầu tạo ngay <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- CREATE CAPSULE VIEW -->
+    <div id="view-create" class="hidden max-w-2xl mx-auto">
+      <button id="create-back-btn" class="flex items-center text-slate-400 hover:text-white mb-6 transition">
+        <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
+        Quay lại kho lưu trữ
+      </button>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+        
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold text-white mb-2 flex items-center">
+            <i data-lucide="send" class="w-8 h-8 mr-3 text-blue-500"></i>
+            Niêm phong tương lai
+          </h2>
+          <p class="text-slate-400">Tạo thông điệp bí mật của bạn, chỉ có thể giải nén vào đúng thời điểm cài đặt.</p>
+        </div>
+
+        <form id="create-form" class="space-y-6">
+          <!-- Title -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Tiêu đề của kén (Tùy chọn)</label>
+            <input type="text" id="capsule-title" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ví dụ: Gửi tôi tuổi 30, Khoảnh khắc tốt nghiệp...">
+          </div>
+
+          <!-- Unlock Date -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Thời điểm mở khóa (Bắt buộc) *</label>
+            <input type="date" id="capsule-unlock-date" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition [color-scheme:dark]">
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Thông điệp của bạn</label>
+            <textarea id="capsule-message" rows="5" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition resize-none" placeholder="Hãy viết những dòng suy nghĩ chân thực nhất gửi tới ngày mai..."></textarea>
+          </div>
+
+          <!-- Media Attachments (Separated: Image and Video) -->
+          <div class="p-5 border border-slate-800 rounded-xl bg-slate-950/40 space-y-4">
+            <h3 class="text-sm font-medium text-slate-300 flex items-center gap-2">
+              <i data-lucide="paperclip" class="w-4 h-4 text-blue-400"></i>
+              Đính kèm phương tiện truyền thông (Tùy chọn)
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Image attachment (Tách riêng biệt) -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="image" class="w-3.5 h-3.5 text-blue-400"></i> Đường dẫn ảnh (URL)
+                </label>
+                <input type="url" id="capsule-image-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://example.com/photo.jpg">
+              </div>
+
+              <!-- Video attachment (Tách riêng biệt) -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i> Đường dẫn video (URL / Youtube)
+                </label>
+                <input type="url" id="capsule-video-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://youtube.com/watch?v=... hoặc .mp4">
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-2">
+              * Hỗ trợ mọi liên kết ảnh trực tiếp và link video YouTube hoặc video dạng tệp có đuôi mở rộng (.mp4, .webm).
+            </p>
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg py-4 rounded-xl transition shadow-lg shadow-blue-500/20 active:scale-[0.99] flex items-center justify-center gap-2">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+            Niêm Phong & Tạo Khóa Dự Phòng
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW CAPSULE DETAILS VIEW -->
+    <div id="view-capsule" class="hidden max-w-3xl mx-auto">
+      <button id="view-back-btn" class="flex items-center text-slate-400 hover:text-white mb-6 transition">
+        <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
+        Quay lại kho lưu trữ
+      </button>
+
+      <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+        <div class="text-center border-b border-slate-800 pb-8 mb-8 relative z-10">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
+            <i data-lucide="unlock" class="w-8 h-8"></i>
+          </div>
+          <h1 id="view-title" class="text-3xl md:text-4xl font-bold text-white mb-3 serif-font"></h1>
+          <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
+            <i data-lucide="calendar-check" class="w-4 h-4 text-blue-400"></i>
+            Được đóng gói từ: <span id="view-created-date"></span>
+          </p>
+        </div>
+
+        <div class="relative z-10 space-y-8">
+          <!-- Text Message -->
+          <div id="view-message-box" class="hidden">
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 md:p-8 whitespace-pre-wrap text-slate-200 text-lg leading-relaxed font-serif"></div>
+          </div>
+
+          <!-- Separated media sections (Ảnh & Video hiển thị song song nếu đính cả hai) -->
+          <div id="view-image-container" class="hidden rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80 p-2 shadow-inner">
+            <img id="view-image" src="" alt="Đính kèm từ quá khứ" class="w-full h-auto max-h-[500px] object-contain rounded-xl">
+          </div>
+
+          <div id="view-video-container" class="hidden rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80 p-2 shadow-inner">
+            <!-- Will be dynamically loaded with standard video or YouTube iframe -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: SUCCESSFUL CREATION & RECOVERY KEY POPUP -->
+  <div id="modal-key" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-12 h-12 bg-green-500/20 text-green-400 rounded-full mb-3">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Niêm Phong Thành Công</h3>
+        <p class="text-slate-400 text-sm mt-1">Chiếc kén của bạn đã được đưa vào dòng thời gian.</p>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-center space-y-2 relative">
+        <span class="text-xs text-slate-500 font-semibold tracking-widest uppercase block">Khóa dự phòng (Recovery Key)</span>
+        <div id="generated-key" class="text-xl md:text-2xl font-mono font-bold text-blue-400 tracking-wider py-1 select-all"></div>
+        <button id="copy-key-btn" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 py-2 rounded-lg text-xs font-medium text-slate-300 transition flex items-center justify-center gap-1.5 active:scale-95">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Sao chép mã khóa</span>
+        </button>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-300 text-xs flex gap-2.5 items-start mt-4 leading-relaxed">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+        <span>
+          <strong>Lưu ý quan trọng:</strong> Hãy sao chép hoặc ghi nhớ mã này. Đây là <strong>mã duy nhất</strong> giúp bạn lấy lại kén này từ một tài khoản khác nếu gặp sự cố.
+        </span>
+      </div>
+
+      <button id="close-key-modal-btn" class="mt-6 w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/10 active:scale-95">
+        Tôi đã lưu khóa an toàn
+      </button>
+    </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  <!-- MODAL: RECOVER/CLAIM CAPSULE POPUP -->
+  <div id="modal-recover" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
+      <button id="close-recover-modal-btn" class="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
 
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-500/20 text-blue-400 rounded-full mb-3">
+          <i data-lucide="key-round" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Khôi phục kén thời gian</h3>
+        <p class="text-slate-400 text-sm mt-1">Kết nối chiếc kén cũ của bạn về tài khoản này.</p>
+      </div>
+
+      <form id="recover-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-400 mb-1.5">Mã khóa dự phòng (Recovery Key)</label>
+          <input type="text" id="recover-input-key" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition font-mono tracking-wider uppercase text-center placeholder:font-sans placeholder:tracking-normal" placeholder="CV-XXXX-XXXX">
+        </div>
+
+        <!-- Security Lockout / Brute Force State Display -->
+        <div id="brute-force-status" class="hidden text-xs py-2.5 px-3 rounded-lg border text-center font-medium"></div>
+
+        <button type="submit" id="recover-submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/10 active:scale-95 flex items-center justify-center gap-2">
+          <i data-lucide="link" class="w-4 h-4"></i>
+          <span>Kết nối kén ngay</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: FIREBASE TROUBLESHOOTING INSTRUCTIONS -->
+  <div id="modal-troubleshoot" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200">
+      <button id="close-troubleshoot-modal-btn" class="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="mb-5 flex items-center gap-3 border-b border-slate-800 pb-4">
+        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+          <i data-lucide="settings" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Cấu hình Tên miền Firebase</h3>
+          <p class="text-slate-400 text-xs mt-0.5">Để kích hoạt đồng bộ hóa đám mây thật</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-slate-300 text-xs sm:text-sm leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+        <p>Lỗi <code class="bg-slate-950 text-red-400 px-1.5 py-0.5 rounded font-mono">auth/unauthorized-domain</code> xuất hiện vì Firebase chặn tất cả các môi trường chạy thử hoặc sandbox không nằm trong danh sách cấp quyền.</p>
+        
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">1</span>
+            <p>Truy cập vào <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-400 hover:underline inline-flex items-center gap-0.5">Firebase Console <i data-lucide="external-link" class="w-3 h-3"></i></a> và chọn dự án của bạn.</p>
+          </div>
+          <div class="flex gap-2">
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">2</span>
+            <p>Chọn mục <strong>Authentication</strong> tại thanh điều hướng bên trái và chuyển sang tab <strong>Settings</strong>.</p>
+          </div>
+          <div class="flex gap-2">
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">3</span>
+            <p>Tìm đến mục <strong>Authorized domains</strong> (Các miền được ủy quyền).</p>
+          </div>
+          <div class="flex gap-2">
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">4</span>
+            <p>Nhấp vào <strong>Add domain</strong> và thêm tên miền của nền tảng thử nghiệm hiện tại (ví dụ: <code class="bg-slate-950 text-slate-300 px-1.5 py-0.5 rounded font-mono" id="current-domain-text"></code>).</p>
+          </div>
+        </div>
+
+        <div class="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 text-blue-300 text-xs mt-2">
+          <strong>Tại sao ứng dụng vẫn hoạt động?</strong> Chúng tôi đã xây dựng sẵn bộ xử lý lưu trữ dự phòng ngoại tuyến. Mọi dữ liệu kén, mật khẩu và khóa khôi phục bạn vừa tạo sẽ hoạt động ổn định ngay tại trình duyệt này nhờ vào Local Engine.
+        </div>
+      </div>
+
+      <button id="close-troubleshoot-btn-bottom" class="mt-6 w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl transition">
+        Tôi đã hiểu
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-sm text-slate-500 mt-auto">
+    <div class="max-w-3xl mx-auto px-4 flex flex-col items-center space-y-3">
+      <p>© 2026 ChronoVault - Nhật ký bảo mật gửi tương lai.</p>
+      <div class="flex items-center space-x-2 bg-slate-900 px-4 py-2.5 rounded-full border border-slate-800 text-xs sm:text-sm">
+        <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0"></i>
+        <span>
+          Chưa biết cách lưu trữ hình ảnh/video trực tiếp? 
+          <a href="https://anotepad.com/notes/pe9ryw66" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 hover:underline font-medium">
+            Xem hướng dẫn tại đây
+          </a>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Firebase JS SDK (v11.6.1) as ES Modules -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInAnonymously, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged, 
+      GoogleAuthProvider, 
+      signInWithPopup 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      addDoc, 
+      updateDoc, 
+      onSnapshot, 
+      collection, 
+      query, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Firebase configuration from user
     const firebaseConfig = {
       apiKey: "AIzaSyDcgynv5TTQZmwYkwUjACrNW19Kl_Mllfo",
       authDomain: "chronovault-815fc.firebaseapp.com",
@@ -47,43 +474,943 @@
       measurementId: "G-MNNH3DXTF2"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    // Engine Core System Setup
+    const appId = "chronovault-app";
+    let firebaseEnabled = false;
+    let auth = null;
+    let db = null;
+    let unsubscribeCapsules = null;
 
-    window.handleAuth = async () => {
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('password').value;
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (error) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            await createUserWithEmailAndPassword(auth, email, pass);
+    // Fill current domain in troubleshoot modal helper
+    document.getElementById('current-domain-text').textContent = window.location.hostname || "null/iframe";
+
+    // Dynamic State Management
+    const state = {
+      user: null,
+      capsules: [],
+      currentView: 'loading',
+      selectedCapsule: null,
+      isAuthLogin: true,
+    };
+
+    // DOM Reference Cache
+    const views = {
+      loading: document.getElementById('view-loading'),
+      auth: document.getElementById('view-auth'),
+      dashboard: document.getElementById('view-dashboard'),
+      create: document.getElementById('view-create'),
+      capsule: document.getElementById('view-capsule')
+    };
+
+    // ==========================================
+    // 2. OFFLINE ENGINE BACKUP DRIVERS (LOCAL)
+    // ==========================================
+    const LocalEngine = {
+      getUsers: () => JSON.parse(localStorage.getItem('chronovault_local_users') || '[]'),
+      saveUsers: (users) => localStorage.setItem('chronovault_local_users', JSON.stringify(users)),
+      
+      getCapsules: () => JSON.parse(localStorage.getItem('chronovault_local_capsules') || '[]'),
+      saveCapsules: (capsules) => localStorage.setItem('chronovault_local_capsules', JSON.stringify(capsules)),
+      
+      getRecoveryRegistry: () => JSON.parse(localStorage.getItem('chronovault_local_recovery') || '{}'),
+      saveRecoveryRegistry: (registry) => localStorage.setItem('chronovault_local_recovery', JSON.stringify(registry)),
+
+      getSecurityAttempts: () => JSON.parse(localStorage.getItem('chronovault_local_security') || '{}'),
+      saveSecurityAttempts: (sec) => localStorage.setItem('chronovault_local_security', JSON.stringify(sec))
+    };
+
+    // Universal Toast Alerts
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const config = {
+        success: { bg: 'bg-green-950/90 border-green-500/50 text-green-200', icon: 'check-circle' },
+        error: { bg: 'bg-red-950/90 border-red-500/50 text-red-200', icon: 'alert-triangle' },
+        info: { bg: 'bg-slate-900/95 border-slate-700 text-slate-200', icon: 'info' }
+      };
+      
+      const setup = config[type] || config.success;
+      toast.className = `p-4 rounded-xl border ${setup.bg} shadow-lg pointer-events-auto flex items-start gap-3 transition-all duration-300 transform translate-y-2 opacity-0 shrink-0`;
+      
+      toast.innerHTML = `
+        <i data-lucide="${setup.icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+        <div class="text-sm font-medium pr-2 leading-tight">${message}</div>
+        <button class="ml-auto text-slate-500 hover:text-slate-300 transition self-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      
+      const closeToast = () => {
+        toast.classList.add('opacity-0', 'translate-y-[-10px]');
+        setTimeout(() => toast.remove(), 300);
+      };
+      
+      toast.querySelector('button').addEventListener('click', closeToast);
+      setTimeout(closeToast, 5000);
+    }
+
+    // Switch Views Helper
+    function switchView(target) {
+      state.currentView = target;
+      Object.keys(views).forEach(key => {
+        if (key === target) {
+          views[key].classList.remove('hidden');
         } else {
-            alert("Lỗi đăng nhập: " + error.message);
+          views[key].classList.add('hidden');
+        }
+      });
+      
+      const userNav = document.getElementById('user-nav');
+      if (state.user && target !== 'auth' && target !== 'loading') {
+        document.getElementById('user-email-display').textContent = state.user.email || 'Khách Offline';
+        userNav.classList.remove('hidden');
+      } else {
+        userNav.classList.add('hidden');
+      }
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    // Update the visual status of Engine Mode
+    function updateEngineBadge(mode) {
+      const badge = document.getElementById('engine-badge');
+      const text = document.getElementById('engine-text');
+      const dot = badge.querySelector('span');
+      
+      if (mode === 'firebase') {
+        badge.className = "flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/30 bg-green-950/20 text-green-400 cursor-pointer hover:bg-green-900/10 transition";
+        text.textContent = "Đám mây ☁️";
+        dot.className = "w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse";
+      } else {
+        badge.className = "flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/30 bg-amber-950/20 text-amber-400 cursor-pointer hover:bg-amber-900/10 transition";
+        text.textContent = "Bộ nhớ máy 💾";
+        dot.className = "w-2 h-2 rounded-full bg-amber-400 mr-1.5 animate-pulse";
+      }
+    }
+
+    // ==========================================
+    // 3. UNIFIED ABSTRACTED STORAGE CONTROLLERS
+    // ==========================================
+    const StorageController = {
+      signIn: async (email, password) => {
+        if (firebaseEnabled) {
+          try {
+            return await signInWithEmailAndPassword(auth, email, password);
+          } catch (err) {
+            // Intercept domain unauthorized failure
+            if (err.code === 'auth/unauthorized-domain') {
+              switchToLocalEngineMode();
+              return await StorageController.signIn(email, password);
+            }
+            throw err;
+          }
+        } else {
+          const users = LocalEngine.getUsers();
+          const found = users.find(u => u.email === email && u.password === password);
+          if (!found) {
+            throw { code: 'auth/invalid-credential' };
+          }
+          onLocalUserChanged(found);
+          return found;
+        }
+      },
+
+      signUp: async (email, password) => {
+        if (firebaseEnabled) {
+          try {
+            return await createUserWithEmailAndPassword(auth, email, password);
+          } catch (err) {
+            if (err.code === 'auth/unauthorized-domain') {
+              switchToLocalEngineMode();
+              return await StorageController.signUp(email, password);
+            }
+            throw err;
+          }
+        } else {
+          const users = LocalEngine.getUsers();
+          if (users.some(u => u.email === email)) {
+            throw { code: 'auth/email-already-in-use' };
+          }
+          const newUser = { uid: "local_" + Date.now(), email, password };
+          users.push(newUser);
+          LocalEngine.saveUsers(users);
+          onLocalUserChanged(newUser);
+          return newUser;
+        }
+      },
+
+      signInWithGoogle: async () => {
+        if (firebaseEnabled) {
+          try {
+            const provider = new GoogleAuthProvider();
+            return await signInWithPopup(auth, provider);
+          } catch (err) {
+            if (err.code === 'auth/unauthorized-domain' || err.message.includes('unauthorized-domain')) {
+              switchToLocalEngineMode();
+              showToast("Đã chuyển sang Bộ nhớ máy do sự cố xác thực Firebase.", "info");
+              return await StorageController.signInWithGoogle();
+            }
+            throw err;
+          }
+        } else {
+          // Mock login Google Offline immediately
+          const mockGoogleUser = {
+            uid: "local_google",
+            email: "google-offline-vault@gmail.com",
+            displayName: "Người dùng Thử nghiệm"
+          };
+          onLocalUserChanged(mockGoogleUser);
+          showToast("Đăng nhập ẩn danh cục bộ thành công!");
+          return mockGoogleUser;
+        }
+      },
+
+      signOut: async () => {
+        if (firebaseEnabled) {
+          await signOut(auth);
+        } else {
+          onLocalUserChanged(null);
+        }
+      },
+
+      saveCapsule: async (capsuleData) => {
+        if (firebaseEnabled) {
+          // Store securely in user capsules collection path
+          const capsulesCollectionRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'capsules');
+          await addDoc(capsulesCollectionRef, capsuleData);
+          
+          // Store recovery code link in public registry path
+          const recoveryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', capsuleData.recoveryKey);
+          await setDoc(recoveryDocRef, {
+            ...capsuleData,
+            originalOwnerId: state.user.uid,
+            claimed: false,
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          // Local Store
+          const localCaps = LocalEngine.getCapsules();
+          const finalCap = {
+            id: "cap_" + Date.now(),
+            userId: state.user.uid,
+            ...capsuleData,
+            createdAt: { seconds: Math.floor(Date.now() / 1000) }
+          };
+          localCaps.push(finalCap);
+          LocalEngine.saveCapsules(localCaps);
+
+          // Store inside Offline Recovery Registry
+          const registry = LocalEngine.getRecoveryRegistry();
+          registry[capsuleData.recoveryKey] = {
+            ...finalCap,
+            originalOwnerId: state.user.uid,
+            claimed: false
+          };
+          LocalEngine.saveRecoveryRegistry(registry);
+        }
+      },
+
+      getLockoutStatus: async (userId) => {
+        if (firebaseEnabled) {
+          const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
+          const docSnap = await getDoc(securityRef);
+          if (docSnap.exists()) {
+            return docSnap.data();
+          }
+          return { attempts: 0, lastAttempt: 0 };
+        } else {
+          const sec = LocalEngine.getSecurityAttempts();
+          return sec[userId] || { attempts: 0, lastAttempt: 0 };
+        }
+      },
+
+      recordLockoutAttempt: async (userId, attempts, lastAttempt) => {
+        if (firebaseEnabled) {
+          const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
+          await setDoc(securityRef, { attempts, lastAttempt });
+        } else {
+          const sec = LocalEngine.getSecurityAttempts();
+          sec[userId] = { attempts, lastAttempt };
+          LocalEngine.saveSecurityAttempts(sec);
+        }
+      },
+
+      claimRecoveryCode: async (key, userId) => {
+        if (firebaseEnabled) {
+          const registryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', key);
+          const registrySnap = await getDoc(registryDocRef);
+          
+          if (!registrySnap.exists()) return { status: 'not_found' };
+          
+          const registryData = registrySnap.data();
+          if (registryData.claimed) return { status: 'claimed' };
+          
+          // Double import block checks
+          if (registryData.originalOwnerId === userId) {
+            const alreadyInLibrary = state.capsules.some(c => c.recoveryKey === key);
+            if (alreadyInLibrary) return { status: 'already_exists' };
+          }
+
+          // Transfer capsule to user
+          const userCapsCollection = collection(db, 'artifacts', appId, 'users', userId, 'capsules');
+          await addDoc(userCapsCollection, {
+            title: registryData.title,
+            unlockDate: registryData.unlockDate,
+            message: registryData.message,
+            imageUrl: registryData.imageUrl || '',
+            videoUrl: registryData.videoUrl || '',
+            recoveryKey: key,
+            createdAt: serverTimestamp()
+          });
+
+          // Seal recovery key usage globally
+          await updateDoc(registryDocRef, {
+            claimed: true,
+            claimedBy: userId,
+            claimedAt: serverTimestamp()
+          });
+
+          return { status: 'success' };
+        } else {
+          // Local claiming process
+          const registry = LocalEngine.getRecoveryRegistry();
+          const registryData = registry[key];
+          
+          if (!registryData) return { status: 'not_found' };
+          if (registryData.claimed) return { status: 'claimed' };
+
+          if (registryData.originalOwnerId === userId) {
+            const alreadyInLibrary = state.capsules.some(c => c.recoveryKey === key);
+            if (alreadyInLibrary) return { status: 'already_exists' };
+          }
+
+          // Deep copy local capsule
+          const localCaps = LocalEngine.getCapsules();
+          localCaps.push({
+            id: "cap_rec_" + Date.now(),
+            userId: userId,
+            title: registryData.title,
+            unlockDate: registryData.unlockDate,
+            message: registryData.message,
+            imageUrl: registryData.imageUrl || '',
+            videoUrl: registryData.videoUrl || '',
+            recoveryKey: key,
+            createdAt: { seconds: Math.floor(Date.now() / 1000) }
+          });
+          LocalEngine.saveCapsules(localCaps);
+
+          // Update registry data
+          registryData.claimed = true;
+          registryData.claimedBy = userId;
+          registry[key] = registryData;
+          LocalEngine.saveRecoveryRegistry(registry);
+
+          return { status: 'success' };
         }
       }
     };
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('authView').classList.add('hidden');
-        document.getElementById('vaultView').classList.remove('hidden');
-        document.getElementById('authHeader').innerText = "Chào, " + user.email;
+    // STEAMING_CHUNK:Initializing App Security and Domain Guardrails...
+    // Fallback switch to local engine mode triggered on exceptions
+    function switchToLocalEngineMode() {
+      firebaseEnabled = false;
+      updateEngineBadge('local');
+      document.getElementById('unauthorized-domain-banner').classList.remove('hidden');
+      
+      if (unsubscribeCapsules) {
+        unsubscribeCapsules();
+        unsubscribeCapsules = null;
+      }
+      
+      // Fallback state trigger
+      if (state.user) {
+        onLocalUserChanged(state.user);
+      } else {
+        switchView('auth');
+      }
+    }
+
+    // Standard handler updates for Offline mode user state
+    function onLocalUserChanged(currUser) {
+      state.user = currUser;
+      if (currUser) {
+        // Feed offline capsule database directly
+        syncLocalCapsules(currUser.uid);
+      } else {
+        state.capsules = [];
+        switchView('auth');
+      }
+    }
+
+    function syncLocalCapsules(userId) {
+      const allCaps = LocalEngine.getCapsules();
+      const userCaps = allCaps.filter(c => c.userId === userId);
+      
+      userCaps.sort((a, b) => new Date(a.unlockDate) - new Date(b.unlockDate));
+      state.capsules = userCaps;
+      
+      if (state.currentView === 'dashboard' || state.currentView === 'loading') {
+        switchView('dashboard');
+        renderCapsules();
+      }
+    }
+
+    // Generates key standard CV-XXXX-XXXX
+    function generateRecoveryKey() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let part1 = '';
+      let part2 = '';
+      for (let i = 0; i < 4; i++) {
+        part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+        part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `CV-${part1}-${part2}`;
+    }
+
+    // Helper functions for countdown
+    function formatTimeLeft(targetDateStr) {
+      const target = new Date(targetDateStr);
+      const now = new Date();
+      const diff = target.getTime() - now.getTime();
+      
+      if (diff <= 0) return "Đã có thể mở!";
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (days > 0) return `Còn ${days} ngày ${hours} giờ`;
+      if (hours > 0) return `Còn ${hours} giờ ${mins} phút`;
+      return `Còn ${mins} phút`;
+    }
+
+    // Render grid items
+    function renderCapsules() {
+      const grid = document.getElementById('capsules-grid');
+      const emptyState = document.getElementById('capsules-empty');
+      grid.innerHTML = '';
+      
+      if (state.capsules.length === 0) {
+        grid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      
+      grid.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      
+      const now = new Date();
+      
+      state.capsules.forEach(capsule => {
+        const unlockDate = new Date(capsule.unlockDate);
+        const isLocked = unlockDate > now;
+        
+        const card = document.createElement('div');
+        card.className = `relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${
+          isLocked 
+            ? 'bg-slate-900 border-slate-800/80 opacity-80 cursor-not-allowed select-none' 
+            : 'bg-gradient-to-br from-blue-950/40 to-purple-950/40 border-blue-500/30 hover:border-blue-500/60 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] cursor-pointer hover:-translate-y-1'
+        }`;
+        
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-4 relative z-20">
+            <div class="p-2.5 rounded-xl ${isLocked ? 'bg-slate-800 text-slate-500' : 'bg-blue-500/20 text-blue-400'}">
+              <i data-lucide="${isLocked ? 'lock' : 'unlock'}" class="w-5 h-5"></i>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Giải mã vào</span>
+              <p class="text-xs font-semibold text-slate-300">${unlockDate.toLocaleDateString('vi-VN')}</p>
+            </div>
+          </div>
+          
+          <h3 class="text-lg font-bold text-white mb-2 truncate pr-2 relative z-20">
+            ${capsule.title || "Kén không tên"}
+          </h3>
+          
+          <p class="text-xs font-medium ${isLocked ? 'text-rose-400' : 'text-emerald-400'} relative z-20 flex items-center gap-1.5">
+            <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+            <span>${formatTimeLeft(capsule.unlockDate)}</span>
+          </p>
+
+          ${isLocked ? `
+          <div class="absolute inset-0 bg-slate-950/10 backdrop-blur-[0.5px] z-10 rounded-2xl"></div>
+          ` : ''}
+        `;
+        
+        if (!isLocked) {
+          card.addEventListener('click', () => {
+            state.selectedCapsule = capsule;
+            showCapsuleDetails();
+          });
+        }
+        
+        grid.appendChild(card);
+      });
+      
+      lucide.createIcons();
+    }
+
+    // View capsule content modal trigger
+    function showCapsuleDetails() {
+      const cap = state.selectedCapsule;
+      if (!cap) return;
+      
+      document.getElementById('view-title').textContent = cap.title || "Kén Bí Mật";
+      
+      const createdDate = cap.createdAt?.seconds 
+        ? new Date(cap.createdAt.seconds * 1000).toLocaleDateString('vi-VN') 
+        : new Date().toLocaleDateString('vi-VN');
+      document.getElementById('view-created-date').textContent = createdDate;
+      
+      const msgBox = document.getElementById('view-message-box');
+      if (cap.message) {
+        msgBox.querySelector('div').textContent = cap.message;
+        msgBox.classList.remove('hidden');
+      } else {
+        msgBox.classList.add('hidden');
+      }
+      
+      // Image direct attachment rendering
+      const imgContainer = document.getElementById('view-image-container');
+      const imgElem = document.getElementById('view-image');
+      if (cap.imageUrl) {
+        imgElem.src = cap.imageUrl;
+        imgContainer.classList.remove('hidden');
+      } else {
+        imgContainer.classList.add('hidden');
+      }
+      
+      // Video direct attachment rendering
+      const videoContainer = document.getElementById('view-video-container');
+      videoContainer.innerHTML = '';
+      if (cap.videoUrl) {
+        videoContainer.classList.remove('hidden');
+        if (cap.videoUrl.includes('youtube.com') || cap.videoUrl.includes('youtu.be')) {
+          let videoId = '';
+          if (cap.videoUrl.includes('youtu.be/')) {
+            videoId = cap.videoUrl.split('youtu.be/')[1].split('?')[0];
+          } else {
+            try {
+              videoId = new URLSearchParams(new URL(cap.videoUrl).search).get('v');
+            } catch (e) {
+              videoId = '';
+            }
+          }
+          if (videoId) {
+            videoContainer.innerHTML = `
+              <div class="relative pt-[56.25%] rounded-xl overflow-hidden">
+                <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+              </div>
+            `;
+          } else {
+            videoContainer.innerHTML = `<div class="p-4 text-center text-rose-400 text-sm">Không thể nạp trình phát cho liên kết video này.</div>`;
+          }
+        } else {
+          videoContainer.innerHTML = `
+            <video src="${cap.videoUrl}" controls class="w-full max-h-[500px] bg-slate-950 rounded-xl" onerror="this.onerror=null; this.insertAdjacentHTML('afterend', '<p class=\'text-center text-rose-400 text-xs p-2\'>Không thể phát video trực tiếp. Hãy kiểm tra lại định dạng tệp.</p>');"></video>
+          `;
+        }
+      } else {
+        videoContainer.classList.add('hidden');
+      }
+      
+      switchView('capsule');
+    }
+
+    // Subscribe user library to firebase database changes
+    function subscribeToCapsulesCloud(userId) {
+      if (unsubscribeCapsules) unsubscribeCapsules();
+      
+      const capsulesRef = collection(db, 'artifacts', appId, 'users', userId, 'capsules');
+      const q = query(capsulesRef);
+      
+      unsubscribeCapsules = onSnapshot(q, (snapshot) => {
+        const loaded = [];
+        snapshot.forEach(doc => {
+          loaded.push({ id: doc.id, ...doc.data() });
+        });
+        
+        loaded.sort((a, b) => new Date(a.unlockDate) - new Date(b.unlockDate));
+        state.capsules = loaded;
+        
+        if (state.currentView === 'dashboard' || state.currentView === 'loading') {
+          switchView('dashboard');
+          renderCapsules();
+        }
+      }, (error) => {
+        console.warn("Lỗi đồng bộ Cloud Firestore, chuyển hệ thống về Local Engine:", error);
+        switchToLocalEngineMode();
+      });
+    }
+
+    // Anti Bruteforce verification sequence
+    async function checkSecurityLockout(userId) {
+      const data = await StorageController.getLockoutStatus(userId);
+      const attempts = data.attempts || 0;
+      const lastAttempt = data.lastAttempt || 0;
+      const now = Date.now();
+      
+      // Lock window: 15 minutes
+      if (attempts >= 5 && (now - lastAttempt) < 15 * 60 * 1000) {
+        const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - lastAttempt)) / 60000);
+        return { locked: true, attempts, minutesLeft };
+      }
+      
+      if ((now - lastAttempt) >= 15 * 60 * 1000 && attempts >= 5) {
+        await StorageController.recordLockoutAttempt(userId, 0, 0);
+        return { locked: false, attempts: 0 };
+      }
+      
+      return { locked: false, attempts };
+    }
+
+    // Boot sequence
+    async function initSystem() {
+      try {
+        // Try to bind and load cloud storage
+        const firebaseApp = initializeApp(firebaseConfig);
+        auth = getAuth(firebaseApp);
+        db = getFirestore(firebaseApp);
+        firebaseEnabled = true;
+        updateEngineBadge('firebase');
+
+        // State changes bind
+        onAuthStateChanged(auth, (currentUser) => {
+          state.user = currentUser;
+          if (currentUser) {
+            subscribeToCapsulesCloud(currentUser.uid);
+          } else {
+            if (unsubscribeCapsules) unsubscribeCapsules();
+            state.capsules = [];
+            switchView('auth');
+          }
+        });
+
+      } catch (err) {
+        console.warn("Lỗi khởi chạy Firebase (unauthorized-domain/network). Sử dụng Bộ nhớ máy.", err);
+        switchToLocalEngineMode();
+      }
+    }
+
+    // Launch
+    initSystem();
+
+    // UI Bindings: Authentication submissions
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const submitBtn = document.getElementById('auth-submit-btn');
+      
+      submitBtn.disabled = true;
+      submitBtn.querySelector('span').textContent = "Đang xử lý...";
+      
+      try {
+        if (state.isAuthLogin) {
+          await StorageController.signIn(email, password);
+          showToast("Đăng nhập thành công!");
+        } else {
+          await StorageController.signUp(email, password);
+          showToast("Đăng ký tài khoản mới thành công!");
+        }
+      } catch (err) {
+        console.error(err);
+        let msg = "Có lỗi xảy ra, vui lòng thử lại.";
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          msg = "Sai tài khoản hoặc mật khẩu.";
+        } else if (err.code === 'auth/email-already-in-use') {
+          msg = "Email này đã được đăng ký trước đó.";
+        } else if (err.code === 'auth/weak-password') {
+          msg = "Mật khẩu quá yếu (yêu cầu tối thiểu 6 ký tự).";
+        }
+        showToast(msg, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = state.isAuthLogin ? "Đăng nhập" : "Tạo tài khoản";
       }
     });
 
-    window.recoverCapsule = async () => {
-      const key = document.getElementById('recoveryKeyInput').value;
-      if (!key) return;
+    // Google authentication binding
+    document.getElementById('auth-google-btn').addEventListener('click', async () => {
       try {
-        const q = query(collection(db, "capsules"), where("recoveryKey", "==", key));
-        const snapshot = await getDocs(q);
-        alert(snapshot.empty ? "Không tìm thấy kén." : "Đã tìm thấy kén!");
+        await StorageController.signInWithGoogle();
       } catch (err) {
-        alert("Lỗi kết nối database.");
+        console.error(err);
+        showToast("Không thể kết nối dịch vụ Google.", "error");
       }
-    };
+    });
+
+    // Login screen switch helper
+    document.getElementById('auth-switch-btn').addEventListener('click', () => {
+      state.isAuthLogin = !state.isAuthLogin;
+      const submitBtn = document.getElementById('auth-submit-btn');
+      const switchText = document.getElementById('auth-switch-text');
+      const switchBtn = document.getElementById('auth-switch-btn');
+      
+      if (state.isAuthLogin) {
+        submitBtn.querySelector('span').textContent = "Đăng nhập";
+        switchText.textContent = "Chưa có tài khoản?";
+        switchBtn.textContent = "Đăng ký ngay";
+      } else {
+        submitBtn.querySelector('span').textContent = "Đăng ký tài khoản";
+        switchText.textContent = "Đã có tài khoản?";
+        switchBtn.textContent = "Đăng nhập";
+      }
+    });
+
+    // Log-out trigger
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await StorageController.signOut();
+      showToast("Đã đăng xuất tài khoản.");
+    });
+
+    // Form: Create new capsule submit
+    document.getElementById('create-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!state.user) {
+        showToast("Bạn cần đăng nhập trước khi thực hiện.", "error");
+        return;
+      }
+      
+      const title = document.getElementById('capsule-title').value.trim();
+      const unlockDateStr = document.getElementById('capsule-unlock-date').value;
+      const message = document.getElementById('capsule-message').value.trim();
+      const imageUrl = document.getElementById('capsule-image-url').value.trim();
+      const videoUrl = document.getElementById('capsule-video-url').value.trim();
+      
+      const unlockDate = new Date(unlockDateStr);
+      const tomorrow = new Date();
+      tomorrow.setHours(0,0,0,0);
+      
+      if (unlockDate <= tomorrow) {
+        showToast("Thời gian mở khóa phải nằm trong tương lai.", "error");
+        return;
+      }
+      
+      if (!message && !imageUrl && !videoUrl) {
+        showToast("Hãy viết lời nhắn hoặc đính kèm ít nhất một phương tiện.", "error");
+        return;
+      }
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="animate-spin text-white w-5 h-5 mr-1" data-lucide="loader-2"></i> Đang niêm phong kén...`;
+      lucide.createIcons();
+      
+      try {
+        const recoveryKey = generateRecoveryKey();
+        
+        const capsuleData = {
+          title: title || "Kén không tên",
+          unlockDate: unlockDate.toISOString(),
+          message: message,
+          imageUrl: imageUrl,
+          videoUrl: videoUrl,
+          recoveryKey: recoveryKey
+        };
+        
+        await StorageController.saveCapsule(capsuleData);
+        
+        document.getElementById('generated-key').textContent = recoveryKey;
+        document.getElementById('modal-key').classList.remove('hidden');
+        
+        e.target.reset();
+        
+      } catch (err) {
+        console.error(err);
+        showToast("Có lỗi trong quá trình tạo kén. Xin vui lòng thử lại.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> Niêm Phong & Tạo Khóa Dự Phòng`;
+        lucide.createIcons();
+      }
+    });
+
+    // Fallback dynamic clipboard copy trigger
+    document.getElementById('copy-key-btn').addEventListener('click', () => {
+      const keyText = document.getElementById('generated-key').textContent;
+      const tempInput = document.createElement('input');
+      tempInput.value = keyText;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      
+      try {
+        document.execCommand('copy');
+        showToast("Đã sao chép mã khóa dự phòng vào khay nhớ tạm!");
+      } catch (err) {
+        showToast("Không thể tự động sao chép. Vui lòng chọn và sao chép thủ công.", "info");
+      } finally {
+        document.body.removeChild(tempInput);
+      }
+    });
+
+    // Form: Recover claim submission
+    document.getElementById('recover-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!state.user) {
+        showToast("Bạn cần đăng nhập để sử dụng tính năng này.", "error");
+        return;
+      }
+      
+      const keyInput = document.getElementById('recover-input-key').value.trim().toUpperCase();
+      const submitBtn = document.getElementById('recover-submit-btn');
+      const statusBox = document.getElementById('brute-force-status');
+      
+      submitBtn.disabled = true;
+      submitBtn.querySelector('span').textContent = "Đang thẩm tra khóa...";
+      
+      try {
+        // Anti Bruteforce Checks
+        const secStatus = await checkSecurityLockout(state.user.uid);
+        if (secStatus.locked) {
+          showToast(`Thao tác bị tạm khóa. Thử lại sau ${secStatus.minutesLeft} phút để chống vét cạn.`, "error");
+          statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
+          statusBox.textContent = `Bảo vệ kích hoạt! Vui lòng chờ ${secStatus.minutesLeft} phút.`;
+          statusBox.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
+          return;
+        }
+        
+        // Claims execution
+        const result = await StorageController.claimRecoveryCode(keyInput, state.user.uid);
+        
+        if (result.status === 'not_found') {
+          // Increment failures
+          const newAttempts = (secStatus.attempts || 0) + 1;
+          await StorageController.recordLockoutAttempt(state.user.uid, newAttempts, Date.now());
+          
+          const attemptsLeft = Math.max(0, 5 - newAttempts);
+          showToast(`Mã khóa không tồn tại! Bạn còn ${attemptsLeft} lần thử.`, "error");
+          
+          if (attemptsLeft === 0) {
+            statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
+            statusBox.textContent = "Bảo vệ kích hoạt! Đã khóa chức năng này trong 15 phút.";
+            statusBox.classList.remove('hidden');
+          } else {
+            statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-amber-950/40 border-amber-500/50 text-amber-300";
+            statusBox.textContent = `Sai mã khóa. Đã thử ${newAttempts}/5 lần.`;
+            statusBox.classList.remove('hidden');
+          }
+          
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
+          return;
+        }
+        
+        if (result.status === 'claimed') {
+          showToast("Mã khóa dự phòng này đã từng được thu hồi trước đây.", "error");
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
+          return;
+        }
+
+        if (result.status === 'already_exists') {
+          showToast("Kén thời gian này vốn dĩ đã có mặt trong kho của bạn.", "info");
+          document.getElementById('modal-recover').classList.add('hidden');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
+          return;
+        }
+
+        // Successfully recovered
+        await StorageController.recordLockoutAttempt(state.user.uid, 0, 0); // Reset Security logs
+        statusBox.classList.add('hidden');
+        
+        showToast("Thu hồi và phục chế kén thời gian thành công!");
+        document.getElementById('modal-recover').classList.add('hidden');
+        document.getElementById('recover-input-key').value = '';
+        
+        // Manual updates triggered under local engine
+        if (!firebaseEnabled) {
+          syncLocalCapsules(state.user.uid);
+        }
+        
+      } catch (err) {
+        console.error(err);
+        showToast("Lỗi hệ thống thu hồi kén.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
+      }
+    });
+
+    // View Routing triggers
+    document.getElementById('logo-btn').addEventListener('click', () => {
+      if (state.user) {
+        switchView('dashboard');
+      } else {
+        switchView('auth');
+      }
+    });
+    
+    document.getElementById('go-create-btn').addEventListener('click', () => switchView('create'));
+    document.getElementById('empty-create-btn').addEventListener('click', () => switchView('create'));
+    document.getElementById('create-back-btn').addEventListener('click', () => switchView('dashboard'));
+    document.getElementById('view-back-btn').addEventListener('click', () => switchView('dashboard'));
+    
+    // Key Popup closures
+    document.getElementById('close-key-modal-btn').addEventListener('click', () => {
+      document.getElementById('modal-key').classList.add('hidden');
+      switchView('dashboard');
+    });
+
+    // Recover popup trigger
+    document.getElementById('open-recover-modal-btn').addEventListener('click', async () => {
+      if (!state.user) return;
+      
+      const statusBox = document.getElementById('brute-force-status');
+      statusBox.classList.add('hidden');
+      document.getElementById('recover-input-key').value = '';
+      
+      const secStatus = await checkSecurityLockout(state.user.uid);
+      if (secStatus.locked) {
+        statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
+        statusBox.textContent = `Bảo vệ chống quét kích hoạt! Vui lòng thử lại sau ${secStatus.minutesLeft} phút.`;
+        statusBox.classList.remove('hidden');
+      } else if (secStatus.attempts > 0) {
+        statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-amber-950/40 border-amber-500/50 text-amber-300";
+        statusBox.textContent = `Phát hiện có ${secStatus.attempts}/5 lượt thử sai.`;
+        statusBox.classList.remove('hidden');
+      }
+      
+      document.getElementById('modal-recover').classList.remove('hidden');
+    });
+
+    document.getElementById('close-recover-modal-btn').addEventListener('click', () => {
+      document.getElementById('modal-recover').classList.add('hidden');
+    });
+
+    // Engine badge configuration guidelines details modal
+    document.getElementById('engine-badge').addEventListener('click', () => {
+      document.getElementById('modal-troubleshoot').classList.remove('hidden');
+    });
+    document.getElementById('open-troubleshoot-btn').addEventListener('click', () => {
+      document.getElementById('modal-troubleshoot').classList.remove('hidden');
+    });
+    document.getElementById('close-troubleshoot-modal-btn').addEventListener('click', () => {
+      document.getElementById('modal-troubleshoot').classList.add('hidden');
+    });
+    document.getElementById('close-troubleshoot-btn-bottom').addEventListener('click', () => {
+      document.getElementById('modal-troubleshoot').classList.add('hidden');
+    });
+
+    // Date Constraints setup
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('capsule-unlock-date').min = tomorrow.toISOString().split('T')[0];
+
   </script>
 </body>
 </html>
