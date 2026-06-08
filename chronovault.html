@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChronoVault - Bảo mật kỷ niệm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-4xl mx-auto">
+    <header class="flex justify-between items-center mb-12">
+      <h1 class="text-3xl font-bold">Chrono<span class="text-indigo-400">Vault</span></h1>
+      <div id="authHeader"></div>
+    </header>
+
+    <main id="mainContent">
+      <!-- Auth Screen -->
+      <div id="authView" class="max-w-md mx-auto bg-slate-900 p-8 rounded-2xl border border-slate-800">
+        <h2 id="authTitle" class="text-xl font-bold mb-4">Đăng nhập / Đăng ký</h2>
+        <input type="email" id="email" placeholder="Email" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
+        <input type="password" id="password" placeholder="Mật khẩu" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg mb-4">
+        <button onclick="handleAuth()" id="authBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold transition">Đăng nhập</button>
+      </div>
+
+      <!-- Vault Screen -->
+      <div id="vaultView" class="hidden">
+        <div class="mb-8 p-4 bg-slate-900 rounded-xl border border-slate-700 flex gap-2">
+          <input type="text" id="recoveryKeyInput" placeholder="Nhập mã dự phòng để khôi phục kén..." class="flex-1 bg-transparent outline-none">
+          <button onclick="recoverCapsule()" class="bg-emerald-600 px-4 py-2 rounded-lg text-sm font-medium">Khôi phục</button>
+        </div>
+        <div id="capsuleList" class="grid md:grid-cols-2 gap-4"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    // LƯU Ý: Hãy điền cấu hình chính xác từ dự án Firebase của bạn vào đây
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.handleAuth = async () => {
+      const email = document.getElementById('email').value;
+      const pass = document.getElementById('password').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('authView').classList.add('hidden');
+        document.getElementById('vaultView').classList.remove('hidden');
+      }
+    });
+
+    window.recoverCapsule = async () => {
+      const key = document.getElementById('recoveryKeyInput').value;
+      if (!key) return;
+      
+      try {
+        const q = query(collection(db, "capsules"), where("recoveryKey", "==", key));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          alert("Đã tìm thấy kén!");
+        } else {
+          alert("Không tìm thấy kén với mã này.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Lỗi khi khôi phục.");
+      }
+    };
+  </script>
+</body>
+</html>
