@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChronoVault - Nhật ký 10 năm sau</title>
+  <title>ChronoVault - Nhật ký 10 năm sau (Cloud Edition)</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Playfair Display for classic aesthetic -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2 family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -36,13 +36,21 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #3b82f6;
     }
+    /* Ambient backdrop animation */
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); opacity: 0.15; }
+      50% { transform: scale(1.1); opacity: 0.25; }
+    }
+    .animate-glow {
+      animation: pulse-glow 8s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
 
   <!-- Ambient glow decoration background -->
-  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none z-0"></div>
-  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none z-0"></div>
+  <div class="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[150px] pointer-events-none z-0 animate-glow"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-900/20 blur-[150px] pointer-events-none z-0 animate-glow" style="animation-delay: 4s;"></div>
 
   <!-- Dynamic Toast Alerts System -->
   <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
@@ -60,10 +68,10 @@
       </div>
 
       <div class="flex items-center space-x-3">
-        <!-- Engine Mode Status Badge -->
-        <div id="engine-badge" class="flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border bg-slate-900 cursor-pointer hover:bg-slate-800 transition" title="Nhấp để xem hướng dẫn cấu hình tên miền">
-          <span class="w-2 h-2 rounded-full bg-slate-500 mr-1.5 animate-pulse"></span>
-          <span id="engine-text">Đang kiểm tra...</span>
+        <!-- Strictly Cloud Connection Badge -->
+        <div id="engine-badge" class="flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 cursor-pointer hover:bg-slate-800 transition" title="Xem thông tin kết nối đám mây">
+          <span class="w-2 h-2 rounded-full bg-blue-400 mr-1.5 animate-pulse"></span>
+          <span>Đám mây Firebase ☁️</span>
         </div>
 
         <div id="user-nav" class="flex items-center space-x-4 hidden">
@@ -84,21 +92,20 @@
     
     <!-- LOADING SPINNER VIEW -->
     <div id="view-loading" class="min-h-[50vh] flex flex-col items-center justify-center">
-      <i data-lucide="clock" class="animate-spin w-12 h-12 text-blue-400 mb-4"></i>
-      <p class="text-slate-400 text-sm">Đang kết nối cổng thời gian...</p>
+      <i data-lucide="loader-2" class="animate-spin w-12 h-12 text-blue-400 mb-4"></i>
+      <p class="text-slate-400 text-sm">Đang thiết lập cổng thời gian đám mây...</p>
     </div>
 
     <!-- AUTHENTICATION VIEW -->
     <div id="view-auth" class="hidden max-w-md mx-auto mt-6">
-      
-      <!-- Domain Unauthorized Notice (Shown dynamically when Firebase blocks origin) -->
-      <div id="unauthorized-domain-banner" class="hidden mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 text-xs leading-relaxed space-y-2">
+      <!-- Error diagnostic alert if unauthorized domain or other firebase error occurs -->
+      <div id="firebase-alert-banner" class="hidden mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs space-y-2">
         <div class="flex items-center gap-2 font-bold text-sm">
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0"></i>
-          <span>Phát hiện lỗi Iframe / Tên miền chưa ủy quyền</span>
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+          <span>Lỗi kết nối Firebase</span>
         </div>
-        <p>Ứng dụng đã <strong>tự động chuyển sang Chế độ Lưu trữ Cục bộ (Local Storage)</strong> để bạn có thể trải nghiệm toàn bộ tính năng một cách mượt mà nhất!</p>
-        <button id="open-troubleshoot-btn" class="text-blue-400 hover:text-blue-300 font-semibold underline block mt-1">Cách cấu hình Đám mây (Firebase)</button>
+        <p id="firebase-alert-text">Không thể xác thực. Hãy đảm bảo bạn đã cấp quyền cho tên miền hiện tại trong Firebase Console.</p>
+        <button id="troubleshoot-trigger" class="text-blue-400 hover:text-blue-300 font-semibold underline block mt-1">Cách cấu hình cấp quyền tên miền</button>
       </div>
 
       <div class="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl relative overflow-hidden backdrop-blur-md p-8">
@@ -106,7 +113,7 @@
         
         <div class="text-center mb-8">
           <h2 class="text-3xl font-bold text-white mb-2 serif-font italic">ChronoVault</h2>
-          <p class="text-slate-400 text-sm">Khóa giữ ký ức, mở khóa tương lai</p>
+          <p class="text-slate-400 text-sm">Đăng nhập để đồng bộ kén lên mây lưu trữ</p>
         </div>
 
         <form id="auth-form" class="space-y-4">
@@ -114,7 +121,7 @@
             <label class="block text-sm font-medium text-slate-400 mb-1">Email</label>
             <div class="relative">
               <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
-              <input type="email" id="auth-email" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="example@email.com">
+              <input type="email" id="auth-email" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="ten-cua-ban@domain.com">
             </div>
           </div>
           <div>
@@ -133,7 +140,7 @@
 
         <div class="mt-6 flex items-center justify-between">
           <hr class="w-full border-slate-800" />
-          <span class="px-3 text-xs text-slate-500 whitespace-nowrap">HOẶC CHỌN</span>
+          <span class="px-3 text-xs text-slate-500 whitespace-nowrap">HOẶC</span>
           <hr class="w-full border-slate-800" />
         </div>
 
@@ -144,7 +151,7 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          Tiếp tục bằng Google
+          Đăng nhập bằng Google
         </button>
 
         <p class="mt-6 text-center text-sm text-slate-400">
@@ -158,13 +165,13 @@
     <div id="view-dashboard" class="hidden space-y-8">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-white">Kho lưu trữ kén thời gian</h2>
-          <p class="text-slate-400 mt-1">Nơi lưu giữ những ký ức an toàn gửi tới tương lai.</p>
+          <h2 class="text-2xl font-bold text-white">Kho kén thời gian trực tuyến</h2>
+          <p class="text-slate-400 mt-1 text-sm">Dữ liệu được mã hóa và bảo vệ an toàn trên đám mây.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <button id="open-recover-modal-btn" class="flex-1 sm:flex-none border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 px-4 py-2.5 rounded-full font-medium flex items-center justify-center gap-2 transition">
             <i data-lucide="key" class="w-4 h-4"></i>
-            Khôi phục kén
+            Nhập khóa phục hồi
           </button>
           <button id="go-create-btn" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-full font-medium flex items-center justify-center gap-2 transition shadow-lg shadow-blue-500/20">
             <i data-lucide="plus-circle" class="w-5 h-5"></i>
@@ -181,9 +188,9 @@
       <!-- Empty state -->
       <div id="capsules-empty" class="hidden text-center py-20 bg-slate-900/40 border border-slate-800 border-dashed rounded-2xl">
         <i data-lucide="clock" class="w-16 h-16 text-slate-700 mx-auto mb-4"></i>
-        <h3 class="text-lg font-medium text-slate-300">Chưa có chiếc kén thời gian nào</h3>
-        <p class="text-slate-500 mt-2 max-w-md mx-auto px-4">
-          Hãy để lại một thông điệp bí mật đến bản thân sau vài năm, hoặc lời nhắn hẹn giờ đầy trân trọng tới những người thân yêu.
+        <h3 class="text-lg font-medium text-slate-300">Không có chiếc kén thời gian nào</h3>
+        <p class="text-slate-500 mt-2 max-w-md mx-auto px-4 text-sm">
+          Hãy để lại một thông điệp ý nghĩa gửi tới bản thân trong tương lai, hoặc đính kèm ảnh kỷ niệm để sau này cùng nhìn lại.
         </p>
         <button id="empty-create-btn" class="mt-6 text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1">
           Bắt đầu tạo ngay <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -206,14 +213,14 @@
             <i data-lucide="send" class="w-8 h-8 mr-3 text-blue-500"></i>
             Niêm phong tương lai
           </h2>
-          <p class="text-slate-400">Tạo thông điệp bí mật của bạn, chỉ có thể giải nén vào đúng thời điểm cài đặt.</p>
+          <p class="text-slate-400 text-sm">Tạo chiếc kén lưu trữ của bạn. Kén chỉ được giải mã và mở khi đến đúng mốc thời gian thiết lập.</p>
         </div>
 
         <form id="create-form" class="space-y-6">
           <!-- Title -->
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Tiêu đề của kén (Tùy chọn)</label>
-            <input type="text" id="capsule-title" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ví dụ: Gửi tôi tuổi 30, Khoảnh khắc tốt nghiệp...">
+            <label class="block text-sm font-medium text-slate-300 mb-2">Tiêu đề của kén</label>
+            <input type="text" id="capsule-title" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ví dụ: Gửi tôi tuổi 30, Kỷ niệm tốt nghiệp...">
           </div>
 
           <!-- Unlock Date -->
@@ -224,8 +231,8 @@
 
           <!-- Message -->
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Thông điệp của bạn</label>
-            <textarea id="capsule-message" rows="5" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition resize-none" placeholder="Hãy viết những dòng suy nghĩ chân thực nhất gửi tới ngày mai..."></textarea>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Nội dung thông điệp</label>
+            <textarea id="capsule-message" rows="5" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition resize-none" placeholder="Viết những suy nghĩ, lời nhắn nhủ chân thật gửi tới tương lai..."></textarea>
           </div>
 
           <!-- Media Attachments (Separated: Image and Video) -->
@@ -236,30 +243,30 @@
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Image attachment (Tách riêng biệt) -->
+              <!-- Image Input -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-medium text-slate-400 flex items-center gap-1.5">
                   <i data-lucide="image" class="w-3.5 h-3.5 text-blue-400"></i> Đường dẫn ảnh (URL)
                 </label>
-                <input type="url" id="capsule-image-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://example.com/photo.jpg">
+                <input type="url" id="capsule-image-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://domain.com/photo.jpg">
               </div>
 
-              <!-- Video attachment (Tách riêng biệt) -->
+              <!-- Video Input -->
               <div class="space-y-1.5">
                 <label class="block text-xs font-medium text-slate-400 flex items-center gap-1.5">
                   <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i> Đường dẫn video (URL / Youtube)
                 </label>
-                <input type="url" id="capsule-video-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://youtube.com/watch?v=... hoặc .mp4">
+                <input type="url" id="capsule-video-url" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="https://youtube.com/watch?v=... hoặc video .mp4">
               </div>
             </div>
-            <p class="text-xs text-slate-500 mt-2">
-              * Hỗ trợ mọi liên kết ảnh trực tiếp và link video YouTube hoặc video dạng tệp có đuôi mở rộng (.mp4, .webm).
+            <p class="text-xs text-slate-500">
+              * Hệ thống hỗ trợ nhúng song song cả ảnh trực tiếp và trình phát video YouTube nếu bạn đính kèm cả hai.
             </p>
           </div>
 
           <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg py-4 rounded-xl transition shadow-lg shadow-blue-500/20 active:scale-[0.99] flex items-center justify-center gap-2">
             <i data-lucide="lock" class="w-5 h-5"></i>
-            Niêm Phong & Tạo Khóa Dự Phòng
+            Niêm Phong Kén & Tạo Khóa Dự Phòng
           </button>
         </form>
       </div>
@@ -283,7 +290,7 @@
           <h1 id="view-title" class="text-3xl md:text-4xl font-bold text-white mb-3 serif-font"></h1>
           <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
             <i data-lucide="calendar-check" class="w-4 h-4 text-blue-400"></i>
-            Được đóng gói từ: <span id="view-created-date"></span>
+            Được đóng gói từ ngày: <span id="view-created-date"></span>
           </p>
         </div>
 
@@ -293,13 +300,13 @@
             <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 md:p-8 whitespace-pre-wrap text-slate-200 text-lg leading-relaxed font-serif"></div>
           </div>
 
-          <!-- Separated media sections (Ảnh & Video hiển thị song song nếu đính cả hai) -->
+          <!-- Separated Media Elements in Viewer -->
           <div id="view-image-container" class="hidden rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80 p-2 shadow-inner">
             <img id="view-image" src="" alt="Đính kèm từ quá khứ" class="w-full h-auto max-h-[500px] object-contain rounded-xl">
           </div>
 
           <div id="view-video-container" class="hidden rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80 p-2 shadow-inner">
-            <!-- Will be dynamically loaded with standard video or YouTube iframe -->
+            <!-- Dynamically populated video element or YouTube iframe -->
           </div>
         </div>
       </div>
@@ -314,7 +321,7 @@
           <i data-lucide="shield-check" class="w-6 h-6"></i>
         </div>
         <h3 class="text-2xl font-bold text-white">Niêm Phong Thành Công</h3>
-        <p class="text-slate-400 text-sm mt-1">Chiếc kén của bạn đã được đưa vào dòng thời gian.</p>
+        <p class="text-slate-400 text-sm mt-1">Kén của bạn đã được lưu trữ an toàn trên đám mây.</p>
       </div>
 
       <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-center space-y-2 relative">
@@ -329,7 +336,7 @@
       <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-300 text-xs flex gap-2.5 items-start mt-4 leading-relaxed">
         <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
         <span>
-          <strong>Lưu ý quan trọng:</strong> Hãy sao chép hoặc ghi nhớ mã này. Đây là <strong>mã duy nhất</strong> giúp bạn lấy lại kén này từ một tài khoản khác nếu gặp sự cố.
+          <strong>Quan trọng:</strong> Hãy lưu lại mã khóa này. Bạn có thể dùng mã này để liên kết, kết nối kén thời gian này vào bất kỳ tài khoản khác nếu gặp sự cố.
         </span>
       </div>
 
@@ -339,7 +346,7 @@
     </div>
   </div>
 
-  <!-- MODAL: RECOVER/CLAIM CAPSULE POPUP -->
+  <!-- MODAL: RECOVER/CLAIM CAPSULE POPUP (WITH BRUTE FORCE LIMITS) -->
   <div id="modal-recover" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-950/80 backdrop-blur-sm p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
       <button id="close-recover-modal-btn" class="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
@@ -351,7 +358,7 @@
           <i data-lucide="key-round" class="w-6 h-6"></i>
         </div>
         <h3 class="text-2xl font-bold text-white">Khôi phục kén thời gian</h3>
-        <p class="text-slate-400 text-sm mt-1">Kết nối chiếc kén cũ của bạn về tài khoản này.</p>
+        <p class="text-slate-400 text-sm mt-1">Sử dụng khóa dự phòng để kết nối kén vào tài khoản này.</p>
       </div>
 
       <form id="recover-form" class="space-y-4">
@@ -360,7 +367,7 @@
           <input type="text" id="recover-input-key" required class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none transition font-mono tracking-wider uppercase text-center placeholder:font-sans placeholder:tracking-normal" placeholder="CV-XXXX-XXXX">
         </div>
 
-        <!-- Security Lockout / Brute Force State Display -->
+        <!-- Security Lockout State Display -->
         <div id="brute-force-status" class="hidden text-xs py-2.5 px-3 rounded-lg border text-center font-medium"></div>
 
         <button type="submit" id="recover-submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/10 active:scale-95 flex items-center justify-center gap-2">
@@ -383,22 +390,22 @@
           <i data-lucide="settings" class="w-6 h-6"></i>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-white">Cấu hình Tên miền Firebase</h3>
-          <p class="text-slate-400 text-xs mt-0.5">Để kích hoạt đồng bộ hóa đám mây thật</p>
+          <h3 class="text-xl font-bold text-white">Ủy quyền tên miền GitHub Pages</h3>
+          <p class="text-slate-400 text-xs mt-0.5">Yêu cầu bắt buộc để dịch vụ Firebase Cloud hoạt động</p>
         </div>
       </div>
 
       <div class="space-y-4 text-slate-300 text-xs sm:text-sm leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
-        <p>Lỗi <code class="bg-slate-950 text-red-400 px-1.5 py-0.5 rounded font-mono">auth/unauthorized-domain</code> xuất hiện vì Firebase chặn tất cả các môi trường chạy thử hoặc sandbox không nằm trong danh sách cấp quyền.</p>
+        <p>Nếu bạn thấy thông báo lỗi <code class="bg-slate-950 text-rose-400 px-1.5 py-0.5 rounded font-mono">auth/unauthorized-domain</code> khi đăng nhập trên GitHub Pages, hãy thêm tên miền của bạn vào mục ủy quyền của dự án Firebase.</p>
         
         <div class="space-y-3">
           <div class="flex gap-2">
             <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">1</span>
-            <p>Truy cập vào <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-400 hover:underline inline-flex items-center gap-0.5">Firebase Console <i data-lucide="external-link" class="w-3 h-3"></i></a> và chọn dự án của bạn.</p>
+            <p>Đăng nhập vào <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-400 hover:underline inline-flex items-center gap-0.5">Firebase Console <i data-lucide="external-link" class="w-3 h-3"></i></a>.</p>
           </div>
           <div class="flex gap-2">
             <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">2</span>
-            <p>Chọn mục <strong>Authentication</strong> tại thanh điều hướng bên trái và chuyển sang tab <strong>Settings</strong>.</p>
+            <p>Chọn mục <strong>Authentication</strong> tại thanh điều hướng trái, chọn tab <strong>Settings</strong>.</p>
           </div>
           <div class="flex gap-2">
             <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">3</span>
@@ -406,12 +413,15 @@
           </div>
           <div class="flex gap-2">
             <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">4</span>
-            <p>Nhấp vào <strong>Add domain</strong> và thêm tên miền của nền tảng thử nghiệm hiện tại (ví dụ: <code class="bg-slate-950 text-slate-300 px-1.5 py-0.5 rounded font-mono" id="current-domain-text"></code>).</p>
+            <p>Nhấp vào <strong>Add domain</strong> và nhập tên miền hiện tại của trang web của bạn:</p>
+          </div>
+          <div class="pl-7">
+            <code class="bg-slate-950 text-green-400 font-bold px-3 py-1.5 rounded border border-slate-800 block text-center font-mono select-all" id="current-domain-text">...</code>
           </div>
         </div>
 
         <div class="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 text-blue-300 text-xs mt-2">
-          <strong>Tại sao ứng dụng vẫn hoạt động?</strong> Chúng tôi đã xây dựng sẵn bộ xử lý lưu trữ dự phòng ngoại tuyến. Mọi dữ liệu kén, mật khẩu và khóa khôi phục bạn vừa tạo sẽ hoạt động ổn định ngay tại trình duyệt này nhờ vào Local Engine.
+          <strong>Lưu ý:</strong> Firebase có thể mất khoảng 1 đến 2 phút để cập nhật cấu hình tên miền mới. Sau khi thêm, hãy tải lại trang GitHub Pages của bạn để bắt đầu đăng nhập.
         </div>
       </div>
 
@@ -442,7 +452,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { 
       getAuth, 
-      signInAnonymously, 
       signInWithEmailAndPassword, 
       createUserWithEmailAndPassword, 
       signOut, 
@@ -463,7 +472,7 @@
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase configuration from user
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDcgynv5TTQZmwYkwUjACrNW19Kl_Mllfo",
       authDomain: "chronovault-815fc.firebaseapp.com",
@@ -474,17 +483,16 @@
       measurementId: "G-MNNH3DXTF2"
     };
 
-    // Engine Core System Setup
+    // System Variables
     const appId = "chronovault-app";
-    let firebaseEnabled = false;
     let auth = null;
     let db = null;
     let unsubscribeCapsules = null;
 
-    // Fill current domain in troubleshoot modal helper
-    document.getElementById('current-domain-text').textContent = window.location.hostname || "null/iframe";
+    // Detect and display current domain for troubleshooting
+    document.getElementById('current-domain-text').textContent = window.location.hostname;
 
-    // Dynamic State Management
+    // App State
     const state = {
       user: null,
       capsules: [],
@@ -500,23 +508,6 @@
       dashboard: document.getElementById('view-dashboard'),
       create: document.getElementById('view-create'),
       capsule: document.getElementById('view-capsule')
-    };
-
-    // ==========================================
-    // 2. OFFLINE ENGINE BACKUP DRIVERS (LOCAL)
-    // ==========================================
-    const LocalEngine = {
-      getUsers: () => JSON.parse(localStorage.getItem('chronovault_local_users') || '[]'),
-      saveUsers: (users) => localStorage.setItem('chronovault_local_users', JSON.stringify(users)),
-      
-      getCapsules: () => JSON.parse(localStorage.getItem('chronovault_local_capsules') || '[]'),
-      saveCapsules: (capsules) => localStorage.setItem('chronovault_local_capsules', JSON.stringify(capsules)),
-      
-      getRecoveryRegistry: () => JSON.parse(localStorage.getItem('chronovault_local_recovery') || '{}'),
-      saveRecoveryRegistry: (registry) => localStorage.setItem('chronovault_local_recovery', JSON.stringify(registry)),
-
-      getSecurityAttempts: () => JSON.parse(localStorage.getItem('chronovault_local_security') || '{}'),
-      saveSecurityAttempts: (sec) => localStorage.setItem('chronovault_local_security', JSON.stringify(sec))
     };
 
     // Universal Toast Alerts
@@ -536,7 +527,7 @@
       toast.innerHTML = `
         <i data-lucide="${setup.icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
         <div class="text-sm font-medium pr-2 leading-tight">${message}</div>
-        <button class="ml-auto text-slate-500 hover:text-slate-300 transition self-center">
+        <button class="ml-auto text-slate-400 hover:text-slate-200 transition self-center">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       `;
@@ -570,7 +561,7 @@
       
       const userNav = document.getElementById('user-nav');
       if (state.user && target !== 'auth' && target !== 'loading') {
-        document.getElementById('user-email-display').textContent = state.user.email || 'Khách Offline';
+        document.getElementById('user-email-display').textContent = state.user.email;
         userNav.classList.remove('hidden');
       } else {
         userNav.classList.add('hidden');
@@ -580,291 +571,103 @@
       lucide.createIcons();
     }
 
-    // Update the visual status of Engine Mode
-    function updateEngineBadge(mode) {
-      const badge = document.getElementById('engine-badge');
-      const text = document.getElementById('engine-text');
-      const dot = badge.querySelector('span');
-      
-      if (mode === 'firebase') {
-        badge.className = "flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/30 bg-green-950/20 text-green-400 cursor-pointer hover:bg-green-900/10 transition";
-        text.textContent = "Đám mây ☁️";
-        dot.className = "w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse";
-      } else {
-        badge.className = "flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/30 bg-amber-950/20 text-amber-400 cursor-pointer hover:bg-amber-900/10 transition";
-        text.textContent = "Bộ nhớ máy 💾";
-        dot.className = "w-2 h-2 rounded-full bg-amber-400 mr-1.5 animate-pulse";
-      }
-    }
-
-    // ==========================================
-    // 3. UNIFIED ABSTRACTED STORAGE CONTROLLERS
-    // ==========================================
+    // Abstracted Storage Controllers strictly pointing to Firebase Cloud Storage paths
     const StorageController = {
       signIn: async (email, password) => {
-        if (firebaseEnabled) {
-          try {
-            return await signInWithEmailAndPassword(auth, email, password);
-          } catch (err) {
-            // Intercept domain unauthorized failure
-            if (err.code === 'auth/unauthorized-domain') {
-              switchToLocalEngineMode();
-              return await StorageController.signIn(email, password);
-            }
-            throw err;
-          }
-        } else {
-          const users = LocalEngine.getUsers();
-          const found = users.find(u => u.email === email && u.password === password);
-          if (!found) {
-            throw { code: 'auth/invalid-credential' };
-          }
-          onLocalUserChanged(found);
-          return found;
-        }
+        return await signInWithEmailAndPassword(auth, email, password);
       },
 
       signUp: async (email, password) => {
-        if (firebaseEnabled) {
-          try {
-            return await createUserWithEmailAndPassword(auth, email, password);
-          } catch (err) {
-            if (err.code === 'auth/unauthorized-domain') {
-              switchToLocalEngineMode();
-              return await StorageController.signUp(email, password);
-            }
-            throw err;
-          }
-        } else {
-          const users = LocalEngine.getUsers();
-          if (users.some(u => u.email === email)) {
-            throw { code: 'auth/email-already-in-use' };
-          }
-          const newUser = { uid: "local_" + Date.now(), email, password };
-          users.push(newUser);
-          LocalEngine.saveUsers(users);
-          onLocalUserChanged(newUser);
-          return newUser;
-        }
+        return await createUserWithEmailAndPassword(auth, email, password);
       },
 
       signInWithGoogle: async () => {
-        if (firebaseEnabled) {
-          try {
-            const provider = new GoogleAuthProvider();
-            return await signInWithPopup(auth, provider);
-          } catch (err) {
-            if (err.code === 'auth/unauthorized-domain' || err.message.includes('unauthorized-domain')) {
-              switchToLocalEngineMode();
-              showToast("Đã chuyển sang Bộ nhớ máy do sự cố xác thực Firebase.", "info");
-              return await StorageController.signInWithGoogle();
-            }
-            throw err;
-          }
-        } else {
-          // Mock login Google Offline immediately
-          const mockGoogleUser = {
-            uid: "local_google",
-            email: "google-offline-vault@gmail.com",
-            displayName: "Người dùng Thử nghiệm"
-          };
-          onLocalUserChanged(mockGoogleUser);
-          showToast("Đăng nhập ẩn danh cục bộ thành công!");
-          return mockGoogleUser;
-        }
+        const provider = new GoogleAuthProvider();
+        return await signInWithPopup(auth, provider);
       },
 
       signOut: async () => {
-        if (firebaseEnabled) {
-          await signOut(auth);
-        } else {
-          onLocalUserChanged(null);
-        }
+        await signOut(auth);
       },
 
       saveCapsule: async (capsuleData) => {
-        if (firebaseEnabled) {
-          // Store securely in user capsules collection path
-          const capsulesCollectionRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'capsules');
-          await addDoc(capsulesCollectionRef, capsuleData);
-          
-          // Store recovery code link in public registry path
-          const recoveryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', capsuleData.recoveryKey);
-          await setDoc(recoveryDocRef, {
-            ...capsuleData,
-            originalOwnerId: state.user.uid,
-            claimed: false,
-            createdAt: new Date().toISOString()
-          });
-        } else {
-          // Local Store
-          const localCaps = LocalEngine.getCapsules();
-          const finalCap = {
-            id: "cap_" + Date.now(),
-            userId: state.user.uid,
-            ...capsuleData,
-            createdAt: { seconds: Math.floor(Date.now() / 1000) }
-          };
-          localCaps.push(finalCap);
-          LocalEngine.saveCapsules(localCaps);
-
-          // Store inside Offline Recovery Registry
-          const registry = LocalEngine.getRecoveryRegistry();
-          registry[capsuleData.recoveryKey] = {
-            ...finalCap,
-            originalOwnerId: state.user.uid,
-            claimed: false
-          };
-          LocalEngine.saveRecoveryRegistry(registry);
-        }
+        if (!state.user) return;
+        // RULE 1: Private capsule storage under the safe path
+        const capsulesCollectionRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'capsules');
+        await addDoc(capsulesCollectionRef, {
+          ...capsuleData,
+          createdAt: serverTimestamp()
+        });
+        
+        // RULE 1: Public recovery registry mapping key directly to original metadata for claiming
+        const recoveryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', capsuleData.recoveryKey);
+        await setDoc(recoveryDocRef, {
+          title: capsuleData.title,
+          unlockDate: capsuleData.unlockDate,
+          message: capsuleData.message,
+          imageUrl: capsuleData.imageUrl,
+          videoUrl: capsuleData.videoUrl,
+          originalOwnerId: state.user.uid,
+          claimed: false,
+          createdAt: new Date().toISOString()
+        });
       },
 
+      // Security lockout logs to block recovery brute-force attacks
       getLockoutStatus: async (userId) => {
-        if (firebaseEnabled) {
-          const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
-          const docSnap = await getDoc(securityRef);
-          if (docSnap.exists()) {
-            return docSnap.data();
-          }
-          return { attempts: 0, lastAttempt: 0 };
-        } else {
-          const sec = LocalEngine.getSecurityAttempts();
-          return sec[userId] || { attempts: 0, lastAttempt: 0 };
+        const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
+        const docSnap = await getDoc(securityRef);
+        if (docSnap.exists()) {
+          return docSnap.data();
         }
+        return { attempts: 0, lastAttempt: 0 };
       },
 
       recordLockoutAttempt: async (userId, attempts, lastAttempt) => {
-        if (firebaseEnabled) {
-          const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
-          await setDoc(securityRef, { attempts, lastAttempt });
-        } else {
-          const sec = LocalEngine.getSecurityAttempts();
-          sec[userId] = { attempts, lastAttempt };
-          LocalEngine.saveSecurityAttempts(sec);
-        }
+        const securityRef = doc(db, 'artifacts', appId, 'users', userId, 'security', 'attempts');
+        await setDoc(securityRef, { attempts, lastAttempt });
       },
 
+      // Recovery claiming process
       claimRecoveryCode: async (key, userId) => {
-        if (firebaseEnabled) {
-          const registryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', key);
-          const registrySnap = await getDoc(registryDocRef);
-          
-          if (!registrySnap.exists()) return { status: 'not_found' };
-          
-          const registryData = registrySnap.data();
-          if (registryData.claimed) return { status: 'claimed' };
-          
-          // Double import block checks
-          if (registryData.originalOwnerId === userId) {
-            const alreadyInLibrary = state.capsules.some(c => c.recoveryKey === key);
-            if (alreadyInLibrary) return { status: 'already_exists' };
-          }
-
-          // Transfer capsule to user
-          const userCapsCollection = collection(db, 'artifacts', appId, 'users', userId, 'capsules');
-          await addDoc(userCapsCollection, {
-            title: registryData.title,
-            unlockDate: registryData.unlockDate,
-            message: registryData.message,
-            imageUrl: registryData.imageUrl || '',
-            videoUrl: registryData.videoUrl || '',
-            recoveryKey: key,
-            createdAt: serverTimestamp()
-          });
-
-          // Seal recovery key usage globally
-          await updateDoc(registryDocRef, {
-            claimed: true,
-            claimedBy: userId,
-            claimedAt: serverTimestamp()
-          });
-
-          return { status: 'success' };
-        } else {
-          // Local claiming process
-          const registry = LocalEngine.getRecoveryRegistry();
-          const registryData = registry[key];
-          
-          if (!registryData) return { status: 'not_found' };
-          if (registryData.claimed) return { status: 'claimed' };
-
-          if (registryData.originalOwnerId === userId) {
-            const alreadyInLibrary = state.capsules.some(c => c.recoveryKey === key);
-            if (alreadyInLibrary) return { status: 'already_exists' };
-          }
-
-          // Deep copy local capsule
-          const localCaps = LocalEngine.getCapsules();
-          localCaps.push({
-            id: "cap_rec_" + Date.now(),
-            userId: userId,
-            title: registryData.title,
-            unlockDate: registryData.unlockDate,
-            message: registryData.message,
-            imageUrl: registryData.imageUrl || '',
-            videoUrl: registryData.videoUrl || '',
-            recoveryKey: key,
-            createdAt: { seconds: Math.floor(Date.now() / 1000) }
-          });
-          LocalEngine.saveCapsules(localCaps);
-
-          // Update registry data
-          registryData.claimed = true;
-          registryData.claimedBy = userId;
-          registry[key] = registryData;
-          LocalEngine.saveRecoveryRegistry(registry);
-
-          return { status: 'success' };
+        const registryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recovery_registry', key);
+        const registrySnap = await getDoc(registryDocRef);
+        
+        if (!registrySnap.exists()) return { status: 'not_found' };
+        
+        const registryData = registrySnap.data();
+        if (registryData.claimed) return { status: 'claimed' };
+        
+        // Check if the capsule is already linked
+        if (registryData.originalOwnerId === userId) {
+          const alreadyInLibrary = state.capsules.some(c => c.recoveryKey === key);
+          if (alreadyInLibrary) return { status: 'already_exists' };
         }
+
+        // Copy capsule into current user's library
+        const userCapsCollection = collection(db, 'artifacts', appId, 'users', userId, 'capsules');
+        await addDoc(userCapsCollection, {
+          title: registryData.title,
+          unlockDate: registryData.unlockDate,
+          message: registryData.message,
+          imageUrl: registryData.imageUrl || '',
+          videoUrl: registryData.videoUrl || '',
+          recoveryKey: key,
+          createdAt: serverTimestamp()
+        });
+
+        // Update public registry so it cannot be claimed again
+        await updateDoc(registryDocRef, {
+          claimed: true,
+          claimedBy: userId,
+          claimedAt: serverTimestamp()
+        });
+
+        return { status: 'success' };
       }
     };
 
-    // STEAMING_CHUNK:Initializing App Security and Domain Guardrails...
-    // Fallback switch to local engine mode triggered on exceptions
-    function switchToLocalEngineMode() {
-      firebaseEnabled = false;
-      updateEngineBadge('local');
-      document.getElementById('unauthorized-domain-banner').classList.remove('hidden');
-      
-      if (unsubscribeCapsules) {
-        unsubscribeCapsules();
-        unsubscribeCapsules = null;
-      }
-      
-      // Fallback state trigger
-      if (state.user) {
-        onLocalUserChanged(state.user);
-      } else {
-        switchView('auth');
-      }
-    }
-
-    // Standard handler updates for Offline mode user state
-    function onLocalUserChanged(currUser) {
-      state.user = currUser;
-      if (currUser) {
-        // Feed offline capsule database directly
-        syncLocalCapsules(currUser.uid);
-      } else {
-        state.capsules = [];
-        switchView('auth');
-      }
-    }
-
-    function syncLocalCapsules(userId) {
-      const allCaps = LocalEngine.getCapsules();
-      const userCaps = allCaps.filter(c => c.userId === userId);
-      
-      userCaps.sort((a, b) => new Date(a.unlockDate) - new Date(b.unlockDate));
-      state.capsules = userCaps;
-      
-      if (state.currentView === 'dashboard' || state.currentView === 'loading') {
-        switchView('dashboard');
-        renderCapsules();
-      }
-    }
-
-    // Generates key standard CV-XXXX-XXXX
+    // Generates ngẫu nhiên mã dự phòng CV-XXXX-XXXX
     function generateRecoveryKey() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let part1 = '';
@@ -876,7 +679,7 @@
       return `CV-${part1}-${part2}`;
     }
 
-    // Helper functions for countdown
+    // Helper to calculate exact countdown
     function formatTimeLeft(targetDateStr) {
       const target = new Date(targetDateStr);
       const now = new Date();
@@ -893,7 +696,7 @@
       return `Còn ${mins} phút`;
     }
 
-    // Render grid items
+    // Rendering dashboard capsules grid
     function renderCapsules() {
       const grid = document.getElementById('capsules-grid');
       const emptyState = document.getElementById('capsules-empty');
@@ -927,13 +730,13 @@
               <i data-lucide="${isLocked ? 'lock' : 'unlock'}" class="w-5 h-5"></i>
             </div>
             <div class="text-right">
-              <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Giải mã vào</span>
+              <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Mở ngày</span>
               <p class="text-xs font-semibold text-slate-300">${unlockDate.toLocaleDateString('vi-VN')}</p>
             </div>
           </div>
           
           <h3 class="text-lg font-bold text-white mb-2 truncate pr-2 relative z-20">
-            ${capsule.title || "Kén không tên"}
+            ${capsule.title || "Kén bí mật"}
           </h3>
           
           <p class="text-xs font-medium ${isLocked ? 'text-rose-400' : 'text-emerald-400'} relative z-20 flex items-center gap-1.5">
@@ -959,13 +762,14 @@
       lucide.createIcons();
     }
 
-    // View capsule content modal trigger
+    // Rendering detailed view of unlocked capsules
     function showCapsuleDetails() {
       const cap = state.selectedCapsule;
       if (!cap) return;
       
       document.getElementById('view-title').textContent = cap.title || "Kén Bí Mật";
       
+      // Compute formatted created date safely
       const createdDate = cap.createdAt?.seconds 
         ? new Date(cap.createdAt.seconds * 1000).toLocaleDateString('vi-VN') 
         : new Date().toLocaleDateString('vi-VN');
@@ -1012,11 +816,11 @@
               </div>
             `;
           } else {
-            videoContainer.innerHTML = `<div class="p-4 text-center text-rose-400 text-sm">Không thể nạp trình phát cho liên kết video này.</div>`;
+            videoContainer.innerHTML = `<div class="p-4 text-center text-rose-400 text-sm">Không hỗ trợ tải tệp YouTube này.</div>`;
           }
         } else {
           videoContainer.innerHTML = `
-            <video src="${cap.videoUrl}" controls class="w-full max-h-[500px] bg-slate-950 rounded-xl" onerror="this.onerror=null; this.insertAdjacentHTML('afterend', '<p class=\'text-center text-rose-400 text-xs p-2\'>Không thể phát video trực tiếp. Hãy kiểm tra lại định dạng tệp.</p>');"></video>
+            <video src="${cap.videoUrl}" controls class="w-full max-h-[500px] bg-slate-950 rounded-xl" onerror="this.onerror=null; this.insertAdjacentHTML('afterend', '<p class=\'text-center text-rose-400 text-xs p-2\'>Không thể phát video này. Hãy kiểm tra lại định dạng nguồn.</p>');"></video>
           `;
         }
       } else {
@@ -1026,7 +830,7 @@
       switchView('capsule');
     }
 
-    // Subscribe user library to firebase database changes
+    // Realtime subscription to Firebase Cloud Capsules (RULE 2: Fetch all, sort in JS memory)
     function subscribeToCapsulesCloud(userId) {
       if (unsubscribeCapsules) unsubscribeCapsules();
       
@@ -1039,6 +843,7 @@
           loaded.push({ id: doc.id, ...doc.data() });
         });
         
+        // Sorting locally to bypass index requirements and maintain speed
         loaded.sort((a, b) => new Date(a.unlockDate) - new Date(b.unlockDate));
         state.capsules = loaded;
         
@@ -1047,8 +852,8 @@
           renderCapsules();
         }
       }, (error) => {
-        console.warn("Lỗi đồng bộ Cloud Firestore, chuyển hệ thống về Local Engine:", error);
-        switchToLocalEngineMode();
+        console.error("Lỗi đồng bộ dữ liệu Firestore Cloud:", error);
+        showToast("Không thể kết nối kho dữ liệu Firestore. Vui lòng kiểm tra quyền truy cập/Rules.", "error");
       });
     }
 
@@ -1059,12 +864,13 @@
       const lastAttempt = data.lastAttempt || 0;
       const now = Date.now();
       
-      // Lock window: 15 minutes
+      // Locked timeframe: 15 minutes
       if (attempts >= 5 && (now - lastAttempt) < 15 * 60 * 1000) {
         const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - lastAttempt)) / 60000);
         return { locked: true, attempts, minutesLeft };
       }
       
+      // If timeframe passed, automatically reset failed attempts
       if ((now - lastAttempt) >= 15 * 60 * 1000 && attempts >= 5) {
         await StorageController.recordLockoutAttempt(userId, 0, 0);
         return { locked: false, attempts: 0 };
@@ -1076,17 +882,16 @@
     // Boot sequence
     async function initSystem() {
       try {
-        // Try to bind and load cloud storage
         const firebaseApp = initializeApp(firebaseConfig);
         auth = getAuth(firebaseApp);
         db = getFirestore(firebaseApp);
-        firebaseEnabled = true;
-        updateEngineBadge('firebase');
 
-        // State changes bind
+        // Bind standard authentication states
         onAuthStateChanged(auth, (currentUser) => {
           state.user = currentUser;
           if (currentUser) {
+            // Hide diagnostic error overlay if logged in successfully
+            document.getElementById('firebase-alert-banner').classList.add('hidden');
             subscribeToCapsulesCloud(currentUser.uid);
           } else {
             if (unsubscribeCapsules) unsubscribeCapsules();
@@ -1096,9 +901,24 @@
         });
 
       } catch (err) {
-        console.warn("Lỗi khởi chạy Firebase (unauthorized-domain/network). Sử dụng Bộ nhớ máy.", err);
-        switchToLocalEngineMode();
+        console.error("Lỗi khởi chạy Firebase:", err);
+        showToast("Có lỗi xảy ra khi cấu hình Firebase SDK.", "error");
+        displayFirebaseDiagnostic(err.message);
       }
+    }
+
+    // Displays clear instructions on the login page in case of Firebase configuration blocks
+    function displayFirebaseDiagnostic(errCode) {
+      const banner = document.getElementById('firebase-alert-banner');
+      const text = document.getElementById('firebase-alert-text');
+      banner.classList.remove('hidden');
+      
+      if (errCode && errCode.includes('unauthorized-domain')) {
+        text.innerHTML = `<strong>Lỗi Ủy quyền Tên miền!</strong> Tên miền <code>${window.location.hostname}</code> chưa được thêm vào Authorized Domains của Firebase Console.`;
+      } else {
+        text.innerHTML = `<strong>Không thể khởi chạy Firebase Cloud:</strong> ${errCode || 'Kiểm tra lại khóa API và Network Connection.'}`;
+      }
+      switchView('auth');
     }
 
     // Launch
@@ -1112,7 +932,7 @@
       const submitBtn = document.getElementById('auth-submit-btn');
       
       submitBtn.disabled = true;
-      submitBtn.querySelector('span').textContent = "Đang xử lý...";
+      submitBtn.querySelector('span').textContent = "Đang thẩm tra...";
       
       try {
         if (state.isAuthLogin) {
@@ -1120,36 +940,44 @@
           showToast("Đăng nhập thành công!");
         } else {
           await StorageController.signUp(email, password);
-          showToast("Đăng ký tài khoản mới thành công!");
+          showToast("Đăng ký tài khoản thành công!");
         }
       } catch (err) {
         console.error(err);
-        let msg = "Có lỗi xảy ra, vui lòng thử lại.";
+        let msg = "Đăng nhập thất bại. Xin vui lòng thử lại.";
         if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-          msg = "Sai tài khoản hoặc mật khẩu.";
+          msg = "Email hoặc mật khẩu không chính xác.";
         } else if (err.code === 'auth/email-already-in-use') {
-          msg = "Email này đã được đăng ký trước đó.";
+          msg = "Địa chỉ email đã được sử dụng.";
         } else if (err.code === 'auth/weak-password') {
-          msg = "Mật khẩu quá yếu (yêu cầu tối thiểu 6 ký tự).";
+          msg = "Mật khẩu yếu. Vui lòng nhập tối thiểu 6 ký tự.";
+        } else if (err.code === 'auth/unauthorized-domain') {
+          displayFirebaseDiagnostic(err.code);
+          return;
         }
         showToast(msg, 'error');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.querySelector('span').textContent = state.isAuthLogin ? "Đăng nhập" : "Tạo tài khoản";
+        submitBtn.querySelector('span').textContent = state.isAuthLogin ? "Đăng nhập" : "Đăng ký";
       }
     });
 
-    // Google authentication binding
+    // Google Login Trigger
     document.getElementById('auth-google-btn').addEventListener('click', async () => {
       try {
         await StorageController.signInWithGoogle();
+        showToast("Đăng nhập bằng tài khoản Google thành công!");
       } catch (err) {
         console.error(err);
-        showToast("Không thể kết nối dịch vụ Google.", "error");
+        if (err.code === 'auth/unauthorized-domain') {
+          displayFirebaseDiagnostic(err.code);
+        } else {
+          showToast("Hủy liên kết đăng nhập bằng Google.", "error");
+        }
       }
     });
 
-    // Login screen switch helper
+    // Switch between Register / Login on Screen
     document.getElementById('auth-switch-btn').addEventListener('click', () => {
       state.isAuthLogin = !state.isAuthLogin;
       const submitBtn = document.getElementById('auth-submit-btn');
@@ -1161,7 +989,7 @@
         switchText.textContent = "Chưa có tài khoản?";
         switchBtn.textContent = "Đăng ký ngay";
       } else {
-        submitBtn.querySelector('span').textContent = "Đăng ký tài khoản";
+        submitBtn.querySelector('span').textContent = "Đăng ký";
         switchText.textContent = "Đã có tài khoản?";
         switchBtn.textContent = "Đăng nhập";
       }
@@ -1193,12 +1021,12 @@
       tomorrow.setHours(0,0,0,0);
       
       if (unlockDate <= tomorrow) {
-        showToast("Thời gian mở khóa phải nằm trong tương lai.", "error");
+        showToast("Thời điểm mở khóa phải nằm trong tương lai.", "error");
         return;
       }
       
       if (!message && !imageUrl && !videoUrl) {
-        showToast("Hãy viết lời nhắn hoặc đính kèm ít nhất một phương tiện.", "error");
+        showToast("Hãy điền tin nhắn hoặc đính kèm ít nhất một liên kết.", "error");
         return;
       }
       
@@ -1228,15 +1056,15 @@
         
       } catch (err) {
         console.error(err);
-        showToast("Có lỗi trong quá trình tạo kén. Xin vui lòng thử lại.", "error");
+        showToast("Lỗi khi kết nối với máy chủ đám mây. Thử lại sau.", "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> Niêm Phong & Tạo Khóa Dự Phòng`;
+        submitBtn.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> Niêm Phong Kén & Tạo Khóa Dự Phòng`;
         lucide.createIcons();
       }
     });
 
-    // Fallback dynamic clipboard copy trigger
+    // Copying key to clipboard
     document.getElementById('copy-key-btn').addEventListener('click', () => {
       const keyText = document.getElementById('generated-key').textContent;
       const tempInput = document.createElement('input');
@@ -1248,18 +1076,18 @@
         document.execCommand('copy');
         showToast("Đã sao chép mã khóa dự phòng vào khay nhớ tạm!");
       } catch (err) {
-        showToast("Không thể tự động sao chép. Vui lòng chọn và sao chép thủ công.", "info");
+        showToast("Không thể sao chép tự động. Hãy bôi đen mã để sao chép.", "info");
       } finally {
         document.body.removeChild(tempInput);
       }
     });
 
-    // Form: Recover claim submission
+    // Form: Recover claim submission with anti brute-force logic
     document.getElementById('recover-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
       if (!state.user) {
-        showToast("Bạn cần đăng nhập để sử dụng tính năng này.", "error");
+        showToast("Bạn cần đăng nhập để khôi phục kén.", "error");
         return;
       }
       
@@ -1268,22 +1096,22 @@
       const statusBox = document.getElementById('brute-force-status');
       
       submitBtn.disabled = true;
-      submitBtn.querySelector('span').textContent = "Đang thẩm tra khóa...";
+      submitBtn.querySelector('span').textContent = "Đang kết nối...";
       
       try {
         // Anti Bruteforce Checks
         const secStatus = await checkSecurityLockout(state.user.uid);
         if (secStatus.locked) {
           showToast(`Thao tác bị tạm khóa. Thử lại sau ${secStatus.minutesLeft} phút để chống vét cạn.`, "error");
-          statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
-          statusBox.textContent = `Bảo vệ kích hoạt! Vui lòng chờ ${secStatus.minutesLeft} phút.`;
+          statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300 animate-pulse";
+          statusBox.textContent = `Bảo vệ Brute-Force kích hoạt! Vui lòng chờ ${secStatus.minutesLeft} phút.`;
           statusBox.classList.remove('hidden');
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
           return;
         }
         
-        // Claims execution
+        // Execute Claims process
         const result = await StorageController.claimRecoveryCode(keyInput, state.user.uid);
         
         if (result.status === 'not_found') {
@@ -1292,15 +1120,15 @@
           await StorageController.recordLockoutAttempt(state.user.uid, newAttempts, Date.now());
           
           const attemptsLeft = Math.max(0, 5 - newAttempts);
-          showToast(`Mã khóa không tồn tại! Bạn còn ${attemptsLeft} lần thử.`, "error");
+          showToast(`Mã khóa không tồn tại! Bạn còn ${attemptsLeft} lần thử trước khi bị khóa.`, "error");
           
           if (attemptsLeft === 0) {
             statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
-            statusBox.textContent = "Bảo vệ kích hoạt! Đã khóa chức năng này trong 15 phút.";
+            statusBox.textContent = "Bảo vệ Brute-force kích hoạt! Tạm khóa khôi phục 15 phút.";
             statusBox.classList.remove('hidden');
           } else {
             statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-amber-950/40 border-amber-500/50 text-amber-300";
-            statusBox.textContent = `Sai mã khóa. Đã thử ${newAttempts}/5 lần.`;
+            statusBox.textContent = `Sai mã khóa. Đã thử ${newAttempts}/5 lần liên tiếp.`;
             statusBox.classList.remove('hidden');
           }
           
@@ -1310,36 +1138,31 @@
         }
         
         if (result.status === 'claimed') {
-          showToast("Mã khóa dự phòng này đã từng được thu hồi trước đây.", "error");
+          showToast("Khóa dự phòng này đã từng được liên kết thành công trước đó.", "error");
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
           return;
         }
 
         if (result.status === 'already_exists') {
-          showToast("Kén thời gian này vốn dĩ đã có mặt trong kho của bạn.", "info");
+          showToast("Kén thời gian này đã có mặt trong kho của bạn.", "info");
           document.getElementById('modal-recover').classList.add('hidden');
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
           return;
         }
 
-        // Successfully recovered
-        await StorageController.recordLockoutAttempt(state.user.uid, 0, 0); // Reset Security logs
+        // Successfully claimed and linked
+        await StorageController.recordLockoutAttempt(state.user.uid, 0, 0); // Reset Security locks
         statusBox.classList.add('hidden');
         
-        showToast("Thu hồi và phục chế kén thời gian thành công!");
+        showToast("Tuyệt vời! Đã thu hồi và khôi phục kén về tài khoản của bạn.");
         document.getElementById('modal-recover').classList.add('hidden');
         document.getElementById('recover-input-key').value = '';
         
-        // Manual updates triggered under local engine
-        if (!firebaseEnabled) {
-          syncLocalCapsules(state.user.uid);
-        }
-        
       } catch (err) {
         console.error(err);
-        showToast("Lỗi hệ thống thu hồi kén.", "error");
+        showToast("Lỗi hệ thống khi khôi phục.", "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.querySelector('span').textContent = "Kết nối kén ngay";
@@ -1377,11 +1200,11 @@
       const secStatus = await checkSecurityLockout(state.user.uid);
       if (secStatus.locked) {
         statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-red-950/40 border-red-500/50 text-red-300";
-        statusBox.textContent = `Bảo vệ chống quét kích hoạt! Vui lòng thử lại sau ${secStatus.minutesLeft} phút.`;
+        statusBox.textContent = `Bảo vệ chống Brute-force đang kích hoạt! Vui lòng thử lại sau ${secStatus.minutesLeft} phút.`;
         statusBox.classList.remove('hidden');
       } else if (secStatus.attempts > 0) {
         statusBox.className = "text-xs py-2.5 px-3 rounded-lg border text-center bg-amber-950/40 border-amber-500/50 text-amber-300";
-        statusBox.textContent = `Phát hiện có ${secStatus.attempts}/5 lượt thử sai.`;
+        statusBox.textContent = `Phát hiện bạn đã thử sai ${secStatus.attempts}/5 lần liên tiếp.`;
         statusBox.classList.remove('hidden');
       }
       
@@ -1392,11 +1215,11 @@
       document.getElementById('modal-recover').classList.add('hidden');
     });
 
-    // Engine badge configuration guidelines details modal
+    // Troubleshoot guidelines bindings
     document.getElementById('engine-badge').addEventListener('click', () => {
       document.getElementById('modal-troubleshoot').classList.remove('hidden');
     });
-    document.getElementById('open-troubleshoot-btn').addEventListener('click', () => {
+    document.getElementById('troubleshoot-trigger').addEventListener('click', () => {
       document.getElementById('modal-troubleshoot').classList.remove('hidden');
     });
     document.getElementById('close-troubleshoot-modal-btn').addEventListener('click', () => {
@@ -1406,7 +1229,7 @@
       document.getElementById('modal-troubleshoot').classList.add('hidden');
     });
 
-    // Date Constraints setup
+    // Setup minimum date to future dates only
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('capsule-unlock-date').min = tomorrow.toISOString().split('T')[0];
